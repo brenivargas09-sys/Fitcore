@@ -663,6 +663,7 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 - [x] **RLS activa**: con la clave anonima, `GET /rest/v1/usuarios` responde 200 con **0 filas** (peticion 14 de la coleccion), y sin `apikey` la API responde **401** (peticion 13). Ambas comprobaciones son asserts automaticos que se ejecutan en cada corrida del pipeline.
 - [x] **Usuario de prueba** registrado y habilitado: `prueba.fitcore@fitcore.com` en Supabase Auth, con correo confirmado, clave asignada y rol `admin` en la tabla `usuarios`; su sesion se valida con la RPC `es_admin` (respuesta `true`) y permite leer las 8 tablas. La contrasena se conserva **unicamente** como secreto `FITCORE_TEST_PASSWORD` del repositorio.
 - [x] El esquema y los scripts de creacion quedan versionados en el repositorio (`supabase/esquema.sql`, `supabase/esquema_extra.sql`) para poder recrear el backend en otro proyecto.
+- [x] **Credenciales de la aplicacion validas contra el backend real:** el usuario `admin@fitcore.com` (contrasena `admin123`, las mismas que documenta el modo demo) quedo **confirmado en Supabase Auth** con rol `admin` en la tabla `usuarios`. Como el APK de release se compila con `SUPABASE_URL` y `SUPABASE_ANON_KEY` inyectados, quien instale la aplicacion publicada entra al panel administrativo contra la base de datos en la nube con esas credenciales, sin depender de datos en memoria.
 
 ---
 

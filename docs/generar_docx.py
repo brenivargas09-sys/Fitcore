@@ -1073,6 +1073,12 @@ vinetas(doc, [
     "[x] El esquema y los scripts de creación quedan versionados en el repositorio "
     "(supabase/esquema.sql, supabase/esquema_extra.sql) para poder recrear el backend en "
     "otro proyecto.",
+    "[x] Credenciales de la aplicación válidas contra el backend real: el usuario "
+    "admin@fitcore.com (contraseña admin123, las mismas que documenta el modo demo) quedó "
+    "confirmado en Supabase Auth con rol admin en la tabla usuarios. Como el APK de release "
+    "se compila con SUPABASE_URL y SUPABASE_ANON_KEY inyectados, quien instale la "
+    "aplicación publicada entra al panel administrativo contra la base de datos en la nube "
+    "con esas credenciales, sin depender de datos en memoria.",
 ])
 
 # ============================================================================

@@ -116,6 +116,25 @@ El pipeline vive en [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml)
 | `FITCORE_TEST_PASSWORD` | Contrasena del usuario de prueba |
 
 > Si los secretos no estan configurados, el job `api` **omite** la prueba de contrato (dejandolo en verde) y el APK se compila en modo demo; el resto del pipeline continua y la Release se publica normalmente.
+>
+> Con los secretos configurados (estado actual del repositorio), el job `api` **ejecuta la coleccion Newman completa contra el proyecto Supabase real** (14 peticiones, 33 aserciones) y el reporte se **sanea** antes de publicarse como artifact `reporte-api`: contrasena, tokens JWT y claves publicables quedan reemplazados por `***`.
+
+### Pruebas de API (Postman / Newman)
+
+La coleccion `api-tests/FitCore.postman_collection.json` cubre autenticacion, lectura de las 8 tablas y seguridad (401 sin credenciales y RLS sin fuga de filas al rol anonimo):
+
+```bash
+npm install -g newman newman-reporter-htmlextra
+newman run api-tests/FitCore.postman_collection.json \
+  -e api-tests/FitCore.postman_environment.json \
+  --env-var "baseUrl=$SUPABASE_URL" \
+  --env-var "anonKey=$SUPABASE_ANON_KEY" \
+  --env-var "email=$FITCORE_TEST_EMAIL" \
+  --env-var "password=$FITCORE_TEST_PASSWORD" \
+  --reporters cli,htmlextra --reporter-htmlextra-export reports/api-report.html
+```
+
+Ultima salida real: **14 peticiones, 33 aserciones, 0 fallas** (evidencias en `docs/evidencias/api-newman-consola.txt`, `docs/evidencias/api-newman-consola-ci.txt` y `docs/evidencias/api-newman-report.html`).
 
 Ejecuciones y artefactos: https://github.com/brenivargas09-sys/Fitcore/actions
 Releases: https://github.com/brenivargas09-sys/Fitcore/releases
