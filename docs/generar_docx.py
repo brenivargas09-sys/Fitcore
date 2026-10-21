@@ -637,7 +637,9 @@ vinetas(doc, [
     "Definición: porcentaje de tiempo en que el backend de FitCore (Supabase: Auth + PostgREST + PostgreSQL) responde correctamente.",
     "Meta: 99.9 % mensual (≈ 43 minutos de indisponibilidad tolerada al mes).",
     "Justificación: el gimnasio opera de 07:00 a 21:00; una indisponibilidad mayor impediría consultar clases, membresías y registrar pagos.",
-    "Verificación: la prueba 'Health — REST responde' de Newman confirma que el servicio REST está operativo; en operación se complementa con el panel de estado de Supabase.",
+    "Verificación: las pruebas «Health — GoTrue responde» y «Health — PostgREST responde» "
+    "de Newman confirman que los servicios de autenticación y REST están operativos; en "
+    "operación se complementa con el panel de estado de Supabase.",
 ])
 
 encabezado(doc, "5.2 Tiempo de respuesta", 2)

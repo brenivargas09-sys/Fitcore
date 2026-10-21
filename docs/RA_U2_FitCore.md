@@ -327,7 +327,7 @@ Los siguientes niveles de servicio (Service Level Agreement) se acuerdan para el
 - **Definicion:** porcentaje de tiempo en que el backend de FitCore (Supabase: Auth + PostgREST + PostgreSQL) responde correctamente.
 - **Meta:** 99.9 % mensual (≈ 43 minutos de indisponibilidad tolerada al mes).
 - **Justificacion:** un gimnasio opera en horario extendido (07:00–21:00). Una indisponibilidad superior implicaria que administradores y socios no pueden consultar clases, membresias ni registrar pagos. El 99.9 % es un objetivo realista y coherente con un servicio gestionado.
-- **Como se verifica:** la prueba "Health - REST responde" de la coleccion Newman confirma que el servicio REST esta operativo; en operacion se complementa con el panel de estado de Supabase.
+- **Como se verifica:** las pruebas "Health - GoTrue responde" y "Health - PostgREST responde" de la coleccion Newman confirman que los servicios de autenticacion y REST estan operativos; en operacion se complementa con el panel de estado de Supabase.
 
 ### 5.2 Tiempo de respuesta
 
