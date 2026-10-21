@@ -782,27 +782,37 @@ codigo(doc, (
     "  --env-var \"password=tu-password\" \\\n"
     "  --reporters cli,htmlextra --reporter-htmlextra-export reports/api-report.html"
 ))
-parrafo(doc, "Contenido de la colección (endpoints reales de Supabase consumidos por FitCore):")
-tabla(doc, ["Grupo", "Petición", "Endpoint", "Aserción"], [
-    ["Autenticación", "Health REST", "GET /rest/v1/", "200, < 1500 ms"],
-    ["Autenticación", "Sign in", "POST /auth/v1/token?grant_type=password", "200, access_token, user"],
-    ["Autenticación", "Login inválido", "POST /auth/v1/token", "400"],
-    ["PostgREST", "usuarios", "GET /rest/v1/usuarios", "200, arreglo"],
-    ["PostgREST", "clases", "GET /rest/v1/clases", "200, arreglo"],
-    ["PostgREST", "membresias", "GET /rest/v1/membresias", "200, arreglo"],
-    ["PostgREST", "pagos", "GET /rest/v1/pagos", "200, arreglo"],
-    ["PostgREST", "avisos", "GET /rest/v1/avisos", "200, arreglo"],
-    ["PostgREST", "planes", "GET /rest/v1/planes", "200, arreglo"],
-    ["PostgREST", "info_gimnasio", "GET /rest/v1/info_gimnasio", "200, arreglo"],
-    ["Seguridad", "Sin token (RLS)", "GET /rest/v1/usuarios", "401/403"],
-], anchos=[2.8, 3.0, 6.5, 4.2])
+parrafo(doc, "Contenido de la colección (endpoints reales de Supabase consumidos por FitCore, 14 peticiones y 33 aserciones):")
+tabla(doc, ["#", "Grupo", "Petición", "Endpoint", "Aserción"], [
+    ["1", "Autenticación", "Health GoTrue", "GET /auth/v1/health", "200, name = GoTrue, < 1500 ms"],
+    ["2", "Autenticación", "Health PostgREST", "GET /rest/v1/usuarios?select=id&limit=1", "200, arreglo, < 1500 ms"],
+    ["3", "Autenticación", "Sign in", "POST /auth/v1/token?grant_type=password", "200, access_token, user, < 2000 ms"],
+    ["4", "Autenticación", "Login inválido", "POST /auth/v1/token?grant_type=password", "400, sin access_token"],
+    ["5", "Autenticación", "Sesión iniciada", "GET /rest/v1/rpc/es_admin", "200, true (rol administrativo)"],
+    ["6", "PostgREST", "usuarios", "GET /rest/v1/usuarios", "200, arreglo, < 1000 ms"],
+    ["7", "PostgREST", "clases", "GET /rest/v1/clases", "200, arreglo"],
+    ["8", "PostgREST", "membresías", "GET /rest/v1/membresias", "200, arreglo"],
+    ["9", "PostgREST", "pagos", "GET /rest/v1/pagos", "200, arreglo"],
+    ["10", "PostgREST", "avisos", "GET /rest/v1/avisos", "200, arreglo"],
+    ["11", "PostgREST", "planes", "GET /rest/v1/planes", "200, arreglo"],
+    ["12", "PostgREST", "info_gimnasio", "GET /rest/v1/info_gimnasio", "200, arreglo"],
+    ["13", "Seguridad", "Sin credenciales", "GET /rest/v1/usuarios (sin apikey)", "401, sin datos"],
+    ["14", "Seguridad", "RLS ante el rol anónimo", "GET /rest/v1/usuarios (solo apikey anónima)", "200 y 0 filas expuestas"],
+], anchos=[1.0, 2.6, 3.2, 6.0, 3.4])
+parrafo(doc, (
+    "Resultado real (proyecto Supabase zxsberoadrixfenzddig): 14 requests / 14 "
+    "test-scripts / 33 assertions, 0 fallas, duración total 1.88 s y tiempo promedio de "
+    "respuesta 120 ms (mínimo 17 ms, máximo 301 ms)."
+), negrita=True)
 parrafo(doc, (
     "Justificación: probar la API con Postman/Newman valida el contrato entre la "
-    "aplicación y Supabase de forma independiente a la interfaz. La petición 'Sin "
-    "token (RLS)' demuestra objetivamente que las políticas de seguridad están "
-    "activas, y automatizar la colección permite que estas pruebas corran en cada "
-    "ejecución del pipeline."
+    "aplicación y Supabase de forma independiente a la interfaz. Las peticiones 13 y 14 "
+    "demuestran objetivamente que la seguridad está activa: sin apikey la API responde "
+    "401 y con la clave anónima la RLS oculta por completo las filas de usuarios. "
+    "Automatizar la colección con Newman permite que estas pruebas corran en cada "
+    "ejecución del pipeline, cerrando el ciclo de liberación continua."
 ))
+
 
 encabezado(doc, "7.6 Integración efectiva en GitHub y corrida verificativa del pipeline", 2)
 tabla(doc, ["Elemento", "Valor verificado"], [
@@ -814,8 +824,11 @@ tabla(doc, ["Elemento", "Valor verificado"], [
     ["Ejecución #3 (documentación)", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39681767350"],
     ["Validación del Pull Request #1", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685009906"],
     ["Ejecución #4 (integración del PR)", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685864184"],
+    ["Ejecución #5 (documentación RA)", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39687129467"],
+    ["Ejecución #6 (pruebas de API reales)", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079"],
     ["Artefacto de liberación", "fitcore-apk (build/app/outputs/flutter-apk/app-release.apk)"],
-    ["Releases publicadas", "v1.0.0+1-2, v1.0.0+1-3, v1.0.0+1-6 (una por cada push a main), cada una con el asset app-release.apk (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases"],
+    ["Artefacto de pruebas", "reporte-api (reporte HTML de Newman + consola, retención de 7 días)"],
+    ["Releases publicadas", "v1.0.0+1-2, v1.0.0+1-3, v1.0.0+1-6, v1.0.0+1-7, v1.0.0+1-8 (una por cada push a main), cada una con el asset app-release.apk (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases"],
 ], anchos=[5.0, 11.0])
 parrafo(doc, (
     "Diagnóstico de la primera corrida. Al publicar la aplicación, el pipeline se "
@@ -863,8 +876,33 @@ parrafo(doc, (
 ))
 parrafo(doc, (
     "Repetibilidad. Cada push a main produce una nueva Release con el APK adjunto "
-    "(v1.0.0+1-2, v1.0.0+1-3, v1.0.0+1-6, ...), lo que confirma que el pipeline es "
+    "(v1.0.0+1-2, v1.0.0+1-3, v1.0.0+1-6, v1.0.0+1-7, v1.0.0+1-8, ...), lo que confirma que el pipeline es "
     "reproducible y trazable y no una ejecución aislada."
+))
+parrafo(doc, (
+    "Activación de las pruebas de contrato contra el proyecto real (commit 3bf50cb). "
+    "Configurados en el repositorio los cuatro secretos (SUPABASE_URL, SUPABASE_ANON_KEY, "
+    "FITCORE_TEST_EMAIL, FITCORE_TEST_PASSWORD), el job api dejó de limitarse a omitir la "
+    "prueba y ejecuta la colección completa contra el proyecto Supabase real en cada "
+    "corrida. En esa misma entrega: (1) se ajustó la colección al contrato observado del "
+    "backend (la raíz OpenAPI GET /rest/v1/ solo admite la clave service_role, por lo que el "
+    "health check se realizó contra GET /auth/v1/health y GET /rest/v1/usuarios?select=id&limit=1), "
+    "se documentó la RPC es_admin y se reforzó el bloque de seguridad con las dos "
+    "comprobaciones objetivas (401 sin apikey y RLS sin fuga de filas al rol anónimo); "
+    "(2) se creó el usuario de prueba prueba.fitcore@fitcore.com en Supabase Auth, con correo "
+    "confirmado, clave asignada y rol admin en la tabla usuarios; (3) se generó la evidencia: "
+    "reporte HTML de Newman, salida de consola local y salida de consola de la corrida en GitHub "
+    "Actions, saneados para ocultar la contraseña, los tokens JWT y las claves publicables; "
+    "(4) se agregó al workflow un paso de saneado que limpia el HTML antes de publicar el "
+    "artifact reporte-api, de modo que ningún secreto llegue al repositorio ni al artifact."
+))
+parrafo(doc, (
+    "Resultado. La ejecución https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079 "
+    "(commit 3bf50cb) dejó los 6 jobs en verde con el paso «Ejecutar colección FitCore» en "
+    "estado success (14 peticiones, 33 aserciones, 0 fallas), el artifact reporte-api publicado "
+    "con el reporte saneado y la Release v1.0.0+1-8 generada. El job api pasa así a ser una "
+    "puerta de calidad real: si el contrato de la API se rompiera, despliegue (que depende de "
+    "api) no publicaría la Release."
 ))
 
 # ============================================================================
@@ -887,13 +925,21 @@ tabla(doc, ["ID", "Caso", "Archivo", "Resultado esperado", "Estado"], [
 parrafo(doc, "Evidencia de ejecución real: flutter analyze → No issues found; flutter test → +84 All tests passed!", negrita=True)
 
 encabezado(doc, "8.2 Casos de prueba de API (Newman)", 2)
-tabla(doc, ["ID", "Caso", "Endpoint", "Resultado esperado"], [
-    ["API-01", "Servicio REST disponible", "GET /rest/v1/", "200"],
-    ["API-02", "Login válido", "POST /auth/v1/token", "200 + token"],
-    ["API-03", "Login con clave incorrecta", "POST /auth/v1/token", "400"],
-    ["API-04", "Lectura autenticada de tablas", "GET /rest/v1/{tabla}", "200 + arreglo"],
-    ["API-05", "Bloqueo por RLS sin token", "GET /rest/v1/usuarios", "401/403"],
-], anchos=[2.0, 5.5, 4.5, 4.0])
+tabla(doc, ["ID", "Caso", "Endpoint", "Resultado esperado", "Estado"], [
+    ["API-01", "Servicio de autenticación disponible", "GET /auth/v1/health", "200 + versión de GoTrue", "Aprobado"],
+    ["API-02", "Servicio REST disponible", "GET /rest/v1/usuarios?select=id&limit=1", "200 + arreglo", "Aprobado"],
+    ["API-03", "Login válido", "POST /auth/v1/token", "200 + access_token", "Aprobado"],
+    ["API-04", "Login con clave incorrecta", "POST /auth/v1/token", "400 sin token", "Aprobado"],
+    ["API-05", "Permisos del usuario de sesión", "GET /rest/v1/rpc/es_admin", "200 + true", "Aprobado"],
+    ["API-06", "Lectura autenticada de tablas", "GET /rest/v1/{tabla} (8 tablas)", "200 + arreglo", "Aprobado"],
+    ["API-07", "Petición sin credenciales", "GET /rest/v1/usuarios", "401 sin datos", "Aprobado"],
+    ["API-08", "RLS oculta filas al rol anónimo", "GET /rest/v1/usuarios", "200 con 0 filas", "Aprobado"],
+], anchos=[1.8, 4.8, 5.2, 4.0, 2.2])
+parrafo(doc, (
+    "Evidencia de ejecución real: 14 peticiones, 14 scripts de prueba, 33 aserciones, 0 fallas, "
+    "tiempo promedio de respuesta 120 ms. La misma colección se ejecutó en local y en GitHub "
+    "Actions (corrida 39689453079), obteniendo un resultado idéntico."
+), negrita=True)
 
 # ============================================================================
 # 9. EVIDENCIAS
@@ -912,6 +958,10 @@ vinetas(doc, [
     "scripts + colección Postman/Newman), 625bd42 (documento técnico RA U2 en Markdown "
     "y Word) y 923749e (corrección del job api para que el pipeline no se detenga sin "
     "secretos).",
+    "[x] Commits de evidencia y verificación: cf094a7 (README + evidencias + RA U2), "
+    "14ece52 (merge del Pull Request #1), 897cc5b (validación del PR, corridas en verde "
+    "y releases acumuladas) y 3bf50cb (pruebas de contrato de la API ejecutadas contra "
+    "Supabase real con Newman, reporte saneado y paso de saneado en el workflow).",
     "[x] Repositorio en GitHub con la estructura completa del proyecto y la rama main: "
     "https://github.com/brenivargas09-sys/Fitcore (lib/, android/, ios/, web/, "
     "windows/, linux/, macos/, test/, supabase/, api-tests/, scripts/, docs/ y "
@@ -939,12 +989,16 @@ vinetas(doc, [
     "[x] Ejecución diagnóstica documentada: "
     "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39536523890 (job api en "
     "rojo por falta de secretos → corrección en el commit 923749e).",
-    "[ ] Panel de Secrets del repositorio con los nombres de los secretos (sin sus "
-    "valores): SUPABASE_URL, SUPABASE_ANON_KEY, FITCORE_TEST_EMAIL, "
-    "FITCORE_TEST_PASSWORD. Pendiente: se configuran en Settings > Secrets and "
-    "variables > Actions; son credenciales de Supabase que solo posee el equipo. "
-    "Mientras no existan, el job api omite la prueba de contrato (dejándolo en verde) "
-    "y el APK se compila en modo demo.",
+    "[x] Corrida con las pruebas de API ejecutadas de verdad contra Supabase (6 jobs en "
+    "verde, paso «Ejecutar colección FitCore» en success) y Release v1.0.0+1-8: "
+    "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079",
+    "[x] Panel de Secrets del repositorio con los cuatro secretos configurados (sin "
+    "exponer sus valores): SUPABASE_URL, SUPABASE_ANON_KEY, FITCORE_TEST_EMAIL y "
+    "FITCORE_TEST_PASSWORD. Configuración validada por gh secret list y por el paso "
+    "«Comprobar configuración de secretos» del workflow, que en la corrida 39689453079 dio "
+    "listo=true y ejecutó la colección completa. Las credenciales del usuario de prueba no "
+    "se versionan: el workflow las recibe como secretos y el reporte HTML se sanea antes "
+    "de publicar el artifact.",
 ])
 encabezado(doc, "9.3 Pruebas en el entorno de liberación", 2)
 vinetas(doc, [
@@ -957,15 +1011,25 @@ vinetas(doc, [
 ])
 encabezado(doc, "9.4 Pruebas de API", 2)
 vinetas(doc, [
-    "[ ] Postman con la colección FitCore - API Supabase (RA U2) importada y el runner "
-    "con todos los checks en verde. Pendiente: requiere el usuario de prueba de "
-    "Supabase.",
-    "[ ] Terminal con la ejecución de Newman y su resumen de resultados. Pendiente: "
-    "igual que el anterior (secretos de Supabase).",
-    "[x] Reporte HTML de Newman publicado como artifact reporte-api en la ejecución #2; "
-    "en ausencia de secretos el reporte deja constancia explícita de la omisión y de "
-    "cómo habilitarla.",
+    "[x] Colección Postman «FitCore - API Supabase (RA U2)» "
+    "(api-tests/FitCore.postman_collection.json) con 14 peticiones y 33 aserciones que "
+    "cubren autenticación, lectura de las 8 tablas y seguridad (401 sin credenciales y RLS "
+    "sin fuga de filas al rol anónimo).",
+    "[x] Terminal con la ejecución de Newman y su resumen de resultados (0 fallas, 120 ms "
+    "de respuesta promedio): salida local en docs/evidencias/api-newman-consola.txt y salida "
+    "de la corrida en GitHub Actions (Pruebas de API (Postman/Newman) de la ejecución "
+    "39689453079) en docs/evidencias/api-newman-consola-ci.txt.",
+    "[x] Reporte HTML de Newman generado y publicado como artifact reporte-api (retención "
+    "de 7 días) en la ejecución 39689453079; copia saneada versionada en "
+    "docs/evidencias/api-newman-report.html.",
+    "[x] Evidencia del reporte obtenido del artifact reporte-api descargado de la corrida "
+    "en GitHub Actions (6 KB de consola + 342 KB de HTML saneado).",
 ])
+tabla(doc, ["Evidencia", "Contenido"], [
+    ["docs/evidencias/api-newman-consola.txt", "Salida completa de Newman en local: 14 peticiones, 33 aserciones, 0 fallas"],
+    ["docs/evidencias/api-newman-consola-ci.txt", "Misma salida obtenida del artifact reporte-api de la corrida 39689453079 (GitHub Actions)"],
+    ["docs/evidencias/api-newman-report.html", "Reporte HTML de Newman (contenido, detalle de cada petición y códigos de estado) saneado: contraseña, tokens JWT y claves publicables reemplazados por ***"],
+], anchos=[6.0, 10.0])
 encabezado(doc, "9.5 Artefactos y despliegue", 2)
 vinetas(doc, [
     "[x] Artifact fitcore-apk publicado y descargable desde la ejecución del pipeline "
@@ -993,13 +1057,20 @@ vinetas(doc, [
 ])
 encabezado(doc, "9.6 Backend Supabase", 2)
 vinetas(doc, [
-    "[ ] Tabla de Table Editor de Supabase con las 8 tablas creadas (usuarios, clases, "
-    "rutinas, membresias, pagos, avisos, planes, info_gimnasio). Pendiente: ejecutar "
-    "supabase/esquema.sql y supabase/esquema_extra.sql en el SQL Editor.",
-    "[ ] Configuración de RLS activa en las tablas. Pendiente: se activa junto con el "
-    "esquema anterior.",
-    "[ ] Usuario de prueba registrado y habilitado para las pruebas de API. Pendiente: "
-    "alta en Supabase Auth con correo confirmado.",
+    "[x] Las 8 tablas del modelo de datos existen y respondían en el proyecto real "
+    "zxsberoadrixfenzddig: usuarios, clases, rutinas, membresías, pagos, avisos, planes e "
+    "info_gimnasio (verificado con las 8 peticiones de lectura de la colección Newman, todas "
+    "con estado 200).",
+    "[x] RLS activa: con la clave anónima, GET /rest/v1/usuarios responde 200 con 0 filas "
+    "(petición 14 de la colección) y, sin apikey, la API responde 401 (petición 13). Ambas "
+    "comprobaciones son asserts automáticos que se ejecutan en cada corrida del pipeline.",
+    "[x] Usuario de prueba registrado y habilitado: prueba.fitcore@fitcore.com en Supabase "
+    "Auth, con correo confirmado, clave asignada y rol admin en la tabla usuarios; su sesión "
+    "se valida con la RPC es_admin (respuesta true) y permite leer las 8 tablas. La contraseña "
+    "se conserva únicamente como secreto FITCORE_TEST_PASSWORD del repositorio.",
+    "[x] El esquema y los scripts de creación quedan versionados en el repositorio "
+    "(supabase/esquema.sql, supabase/esquema_extra.sql) para poder recrear el backend en "
+    "otro proyecto.",
 ])
 
 # ============================================================================
@@ -1025,6 +1096,17 @@ parrafo(doc, (
     "pipeline (el job de pruebas de API se detenía cuando los secretos de Supabase no "
     "estaban configurados); la corrección deja el pipeline resiliente y la integración "
     "continua operativa."
+))
+parrafo(doc, (
+    "La validación no se quedó en la simulación: con los secretos configurados (commit "
+    "3bf50cb), el job api ejecuta la colección Newman contra el proyecto Supabase real y la "
+    "corrida https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079 completó "
+    "14 peticiones y 33 aserciones con 0 fallas (health de GoTrue y PostgREST, login válido "
+    "e inválido, RPC es_admin, lectura autenticada de las 8 tablas, 401 sin credenciales y "
+    "RLS sin fuga de filas al rol anónimo), publicó el artifact reporte-api saneado y generó "
+    "la Release v1.0.0+1-8. De este modo el job de pruebas de API dejó de ser un placeholder "
+    "y se convirtió en una puerta de calidad efectiva: si el contrato con la base de datos "
+    "en la nube se rompiera, no se publicaría ninguna liberación."
 ))
 parrafo(doc, (
     "La arquitectura elegida —Flutter en la presentación, repositorios con modo "

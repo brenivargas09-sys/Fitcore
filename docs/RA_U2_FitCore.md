@@ -504,23 +504,28 @@ newman run api-tests/FitCore.postman_collection.json \
   --reporters cli,htmlextra --reporter-htmlextra-export reports/api-report.html
 ```
 
-**Contenido de la coleccion (endpoints reales de Supabase consumidos por FitCore):**
+**Contenido de la coleccion (endpoints reales de Supabase consumidos por FitCore, 14 peticiones y 33 aserciones):**
 
-| Grupo | Peticion | Endpoint | Asercion |
-|---|---|---|---|
-| Autenticacion | Health REST | `GET /rest/v1/` | Status 200, < 1500 ms |
-| Autenticacion | Sign in | `POST /auth/v1/token?grant_type=password` | Status 200, `access_token`, `user` |
-| Autenticacion | Login invalido | `POST /auth/v1/token?grant_type=password` | Status 400 |
-| PostgREST | usuarios | `GET /rest/v1/usuarios` | Status 200, arreglo |
-| PostgREST | clases | `GET /rest/v1/clases` | Status 200, arreglo |
-| PostgREST | membresias | `GET /rest/v1/membresias` | Status 200, arreglo |
-| PostgREST | pagos | `GET /rest/v1/pagos` | Status 200, arreglo |
-| PostgREST | avisos | `GET /rest/v1/avisos` | Status 200, arreglo |
-| PostgREST | planes | `GET /rest/v1/planes` | Status 200, arreglo |
-| PostgREST | info_gimnasio | `GET /rest/v1/info_gimnasio` | Status 200, arreglo |
-| Seguridad | Sin token (RLS) | `GET /rest/v1/usuarios` | Status 401/403 |
+| # | Grupo | Peticion | Endpoint | Asercion |
+|---|---|---|---|---|
+| 1 | Autenticacion | Health GoTrue | `GET /auth/v1/health` | Status 200, `name = GoTrue`, < 1500 ms |
+| 2 | Autenticacion | Health PostgREST | `GET /rest/v1/usuarios?select=id&limit=1` | Status 200, arreglo, < 1500 ms |
+| 3 | Autenticacion | Sign in | `POST /auth/v1/token?grant_type=password` | Status 200, `access_token`, `user`, < 2000 ms |
+| 4 | Autenticacion | Login invalido | `POST /auth/v1/token?grant_type=password` | Status 400, sin `access_token` |
+| 5 | Autenticacion | Sesion iniciada | `GET /rest/v1/rpc/es_admin` | Status 200, `true` (rol administrativo) |
+| 6 | PostgREST | usuarios | `GET /rest/v1/usuarios` | Status 200, arreglo, < 1000 ms |
+| 7 | PostgREST | clases | `GET /rest/v1/clases` | Status 200, arreglo |
+| 8 | PostgREST | membresias | `GET /rest/v1/membresias` | Status 200, arreglo |
+| 9 | PostgREST | pagos | `GET /rest/v1/pagos` | Status 200, arreglo |
+| 10 | PostgREST | avisos | `GET /rest/v1/avisos` | Status 200, arreglo |
+| 11 | PostgREST | planes | `GET /rest/v1/planes` | Status 200, arreglo |
+| 12 | PostgREST | info_gimnasio | `GET /rest/v1/info_gimnasio` | Status 200, arreglo |
+| 13 | Seguridad | Sin credenciales | `GET /rest/v1/usuarios` (sin `apikey`) | Status **401**, sin datos |
+| 14 | Seguridad | RLS ante el rol anonimo | `GET /rest/v1/usuarios` (solo `apikey` anonima) | Status 200 y **0 filas** expuestas |
 
-**Justificacion:** probar la API con Postman/Newman valida el **contrato** entre la app y Supabase de forma independiente a la interfaz. La peticion "Sin token (RLS)" demuestra objetivamente que las politicas de seguridad estan activas. Automatizar la coleccion con Newman permite que estas pruebas corran en cada ejecucion del pipeline, cerrando el ciclo de liberacion continua.
+**Resultado real (Supabase `zxsberoadrixfenzddig`):** `14 requests / 14 test-scripts / 33 assertions`, **0 fallas**, duracion total 1.88 s y tiempo promedio de respuesta 120 ms (minimo 17 ms, maximo 301 ms).
+
+**Justificacion:** probar la API con Postman/Newman valida el **contrato** entre la app y Supabase de forma independiente a la interfaz. Las peticiones 13 y 14 demuestran objetivamente que la seguridad esta activa: sin `apikey` la API responde 401 y con la clave anonima la RLS oculta por completo las filas de `usuarios`. Automatizar la coleccion con Newman permite que estas pruebas corran en cada ejecucion del pipeline, cerrando el ciclo de liberacion continua.
 
 ### 7.6 Integracion efectiva en GitHub y corrida verificativa del pipeline
 
@@ -534,8 +539,11 @@ newman run api-tests/FitCore.postman_collection.json \
 | Ejecucion #3 (documentacion) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39681767350 |
 | Validacion del Pull Request #1 | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685009906 |
 | Ejecucion #4 (integracion del PR) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685864184 |
+| Ejecucion #5 (documentacion RA) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39687129467 |
+| Ejecucion #6 (**pruebas de API reales**) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079 |
 | Artefacto de liberacion | `fitcore-apk` (`build/app/outputs/flutter-apk/app-release.apk`) |
-| Releases publicadas | **v1.0.0+1-2**, **v1.0.0+1-3**, **v1.0.0+1-6** (una por cada `push` a `main`), cada una con el asset `app-release.apk` (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases |
+| Artefacto de pruebas | `reporte-api` (reporte HTML de Newman + consola, retencion de 7 dias) |
+| Releases publicadas | **v1.0.0+1-2**, **v1.0.0+1-3**, **v1.0.0+1-6**, **v1.0.0+1-7**, **v1.0.0+1-8** (una por cada `push` a `main`), cada una con el asset `app-release.apk` (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases |
 
 **Diagnostico de la primera corrida.** Al publicar la aplicacion, el pipeline se ejecuto por primera vez y **4 de los 6 jobs quedaron en verde** (entorno, calidad, pruebas, construccion del APK). El job **`api` fallo** porque las pruebas de contrato de Newman dependen de los secretos `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FITCORE_TEST_EMAIL` y `FITCORE_TEST_PASSWORD`, que todavia no estaban configurados en el repositorio: sin esas credenciales la coleccion se ejecuta contra una `baseUrl` vacia. Como `despliegue` depende de `api`, el job de publicacion del Release quedo en estado **skipped** y no se genero ninguna liberacion.
 
@@ -550,7 +558,16 @@ newman run api-tests/FitCore.postman_collection.json \
 
 **Validacion en un Pull Request (revision antes de integrar).** El cambio de codigo y de documentacion se integro mediante el **Pull Request #1** (rama `feature/evidencias-ci-cd` → `main`, https://github.com/brenivargas09-sys/Fitcore/pull/1). La ejecucion del workflow disparada por el Pull Request (https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685009906) dejo los **5 jobs ejecutables en verde** (entorno, calidad, pruebas, API y compilacion del APK); el job `despliegue` aparece como **skipped** porque, por diseno, solo libera cuando la referencia es `main` y el evento es `push`, de modo que **nunca se publica una Release a partir de un Pull Request**. Al integrar el PR, la ejecucion sobre `main` (https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685864184) completo los **6 jobs en verde** y genero una nueva Release. De esta forma queda evidenciado el ciclo completo: `push` de la rama → validacion en el PR → integracion → liberacion.
 
-**Repetibilidad.** Cada `push` a `main` produce una nueva Release con el APK adjunto (`v1.0.0+1-2`, `v1.0.0+1-3`, `v1.0.0+1-6`, ...), lo que confirma que el pipeline es **reproducible y trazable** y no una ejecucion aislada.
+**Repetibilidad.** Cada `push` a `main` produce una nueva Release con el APK adjunto (`v1.0.0+1-2`, `v1.0.0+1-3`, `v1.0.0+1-6`, `v1.0.0+1-7`, `v1.0.0+1-8`, ...), lo que confirma que el pipeline es **reproducible y trazable** y no una ejecucion aislada.
+
+**Activacion de las pruebas de contrato contra el proyecto real (commit `3bf50cb`).** Configurados en el repositorio los cuatro secretos (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FITCORE_TEST_EMAIL`, `FITCORE_TEST_PASSWORD`), el job `api` dejo de limitarse a *omitir* la prueba y **ejecuta la coleccion completa contra el proyecto Supabase real** en cada corrida. En esa misma entrega se:
+
+1. **Ajusto la coleccion al contrato observado del backend** (la raiz OpenAPI `GET /rest/v1/` solo admite la clave `service_role`, por lo que el health check se realizo contra `GET /auth/v1/health` y `GET /rest/v1/usuarios?select=id&limit=1`), se documento la RPC `es_admin` y se reforzo el bloque de seguridad con las dos comprobaciones objetivas (401 sin `apikey` y RLS sin fuga de filas al rol anonimo).
+2. **Se creo el usuario de prueba** `prueba.fitcore@fitcore.com` en Supabase Auth, con correo confirmado, clave asignada y rol `admin` en la tabla `usuarios`, para que las pruebas dispongan de sesion valida.
+3. **Se genero la evidencia**: reporte HTML de Newman (`docs/evidencias/api-newman-report.html`), salida de consola local (`docs/evidencias/api-newman-consola.txt`) y salida de consola de la corrida en GitHub Actions (`docs/evidencias/api-newman-consola-ci.txt`), **saneados** para ocultar la contrasena, los tokens JWT y las claves publicables.
+4. **Se agrego un paso de saneado** al workflow ("Sanear el reporte (ocultar credenciales)") que limpia el HTML antes de publicar el artifact `reporte-api`, de modo que ningun secreto llegue al repositorio ni al artifact.
+
+**Resultado.** La ejecucion https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079 (commit `3bf50cb`) dejo los **6 jobs en verde** con el paso *Ejecutar coleccion FitCore* en estado **success** (14 peticiones, 33 aserciones, 0 fallas), el artifact `reporte-api` publicado con el reporte saneado y la **Release `v1.0.0+1-8`** generada. El job `api` pasa asi a ser una **puerta de calidad real**: si el contrato de la API se rompiera, `despliegue` (que depende de `api`) no publicaria la Release.
 
 ---
 
@@ -575,13 +592,18 @@ newman run api-tests/FitCore.postman_collection.json \
 
 ### 8.2 Casos de prueba de API (Newman)
 
-| ID | Caso | Endpoint | Resultado esperado |
-|---|---|---|---|
-| API-01 | Servicio REST disponible | `GET /rest/v1/` | 200 |
-| API-02 | Login valido | `POST /auth/v1/token` | 200 + token |
-| API-03 | Login con clave incorrecta | `POST /auth/v1/token` | 400 |
-| API-04 | Lectura autenticada de tablas | `GET /rest/v1/{tabla}` | 200 + arreglo |
-| API-05 | Bloqueo por RLS sin token | `GET /rest/v1/usuarios` | 401/403 |
+| ID | Caso | Endpoint | Resultado esperado | Estado |
+|---|---|---|---|---|
+| API-01 | Servicio de autenticacion disponible | `GET /auth/v1/health` | 200 + version de GoTrue | Aprobado |
+| API-02 | Servicio REST disponible | `GET /rest/v1/usuarios?select=id&limit=1` | 200 + arreglo | Aprobado |
+| API-03 | Login valido | `POST /auth/v1/token` | 200 + `access_token` | Aprobado |
+| API-04 | Login con clave incorrecta | `POST /auth/v1/token` | 400 sin token | Aprobado |
+| API-05 | Permisos del usuario de sesion | `GET /rest/v1/rpc/es_admin` | 200 + `true` | Aprobado |
+| API-06 | Lectura autenticada de tablas | `GET /rest/v1/{tabla}` (8 tablas) | 200 + arreglo | Aprobado |
+| API-07 | Peticion sin credenciales | `GET /rest/v1/usuarios` | 401 sin datos | Aprobado |
+| API-08 | RLS oculta filas al rol anonimo | `GET /rest/v1/usuarios` | 200 con 0 filas | Aprobado |
+
+**Evidencia de ejecucion real:** 14 peticiones, 14 scripts de prueba, **33 aserciones, 0 fallas**, tiempo promedio de respuesta 120 ms. La misma coleccion se ejecuto en local y en GitHub Actions (corrida `39689453079`), obteniendo un resultado identico.
 
 ---
 
@@ -591,6 +613,7 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 
 ### 9.1 Control de versiones y repositorio
 - [x] `git log --oneline` con los commits del pipeline: `d866825` (pipeline CI/CD + scripts + coleccion Postman/Newman), `625bd42` (documento tecnico RA U2 en Markdown y Word) y `923749e` (correccion del job `api` para que el pipeline no se detenga sin secretos).
+- [x] Commits de evidencia y verificacion: `cf094a7` (README + evidencias + RA U2), `14ece52` (merge del Pull Request #1), `897cc5b` (validacion del PR, corridas en verde y releases acumuladas) y `3bf50cb` (**pruebas de contrato de la API ejecutadas contra Supabase real** con Newman, reporte saneado y paso de saneado en el workflow).
 - [x] Repositorio en GitHub con la estructura completa del proyecto y la rama `main`: **https://github.com/brenivargas09-sys/Fitcore** (`lib/`, `android/`, `ios/`, `web/`, `windows/`, `linux/`, `macos/`, `test/`, `supabase/`, `api-tests/`, `scripts/`, `docs/` y `.github/workflows/ci-cd.yml`).
 - [x] Pull Request de ejemplo con la validacion del pipeline ejecutada (rama `feature/evidencias-ci-cd` → `main`), usado para evidenciar la revision antes de integrar cambios: **https://github.com/brenivargas09-sys/Fitcore/pull/1** (README del proyecto, evidencias de ejecucion de la aplicacion y actualizacion del presente documento; el pipeline se ejecuta automaticamente en cada Pull Request hacia `main`).
 
@@ -600,7 +623,8 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 - [x] Corridas posteriores en verde que confirman la repetibilidad del pipeline: https://github.com/brenivargas09-sys/Fitcore/actions/runs/39681767350 (6/6) y https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685864184 (6/6, integracion del Pull Request #1).
 - [x] Corrida de validacion del Pull Request #1 (5 jobs en verde; `despliegue` **skipped** por tratarse de un PR): https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685009906
 - [x] Ejecucion diagnostica documentada: https://github.com/brenivargas09-sys/Fitcore/actions/runs/39536523890 (job `api` en rojo por falta de secretos → correccion en el commit `923749e`).
-- [ ] Panel de **Secrets** del repositorio con los nombres de los secretos (sin sus valores): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FITCORE_TEST_EMAIL`, `FITCORE_TEST_PASSWORD`. *Pendiente: se configuran en **Settings > Secrets and variables > Actions**; son credenciales de Supabase que solo posee el equipo. Mientras no existan, el job `api` omite la prueba de contrato (dejandolo en verde) y el APK se compila en modo demo.*
+- [x] Corrida con las **pruebas de API ejecutadas de verdad** contra Supabase (6 jobs en verde, paso *Ejecutar coleccion FitCore* en success) y Release `v1.0.0+1-8`: https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079
+- [x] Panel de **Secrets** del repositorio con los cuatro secretos configurados (sin exponer sus valores): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FITCORE_TEST_EMAIL`, `FITCORE_TEST_PASSWORD`. *Configuracion validada por `gh secret list` y por el paso "Comprobar configuracion de secretos" del workflow, que en la corrida `39689453079` dio `listo=true` y ejecuto la coleccion completa. Las credenciales del usuario de prueba no se versionan: el workflow las recibe como secretos y el reporte HTML se sanea antes de publicar el artifact.*
 
 ### 9.3 Pruebas en el entorno de liberacion
 - [x] Terminal con la salida de `flutter analyze` (**No issues found!**), job *Analisis estatico y formato* de la ejecucion #2.
@@ -608,9 +632,16 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 - [x] Archivo `coverage/lcov.info` generado y publicado como artifact `cobertura` (retencion de 7 dias) en la ejecucion #2.
 
 ### 9.4 Pruebas de API
-- [ ] **Postman** con la coleccion *FitCore - API Supabase (RA U2)* importada y el *runner* con todos los checks en verde. *Pendiente: requiere el usuario de prueba de Supabase.*
-- [ ] Terminal con la ejecucion de **Newman** y su resumen de resultados. *Pendiente: igual que el anterior (secrets de Supabase).*
-- [x] Reporte HTML de Newman publicado como artifact `reporte-api` en la ejecucion #2; en ausencia de secretos el reporte deja constancia explicita de la omision y de como habilitarla.
+- [x] Coleccion **Postman** *FitCore - API Supabase (RA U2)* (`api-tests/FitCore.postman_collection.json`) con **14 peticiones** y **33 aserciones** que cubren autenticacion, lectura de las 8 tablas y seguridad (401 sin credenciales y RLS sin fuga de filas al rol anonimo).
+- [x] Terminal con la ejecucion de **Newman** y su resumen de resultados (**0 fallas**, 120 ms de respuesta promedio): salida local en `docs/evidencias/api-newman-consola.txt` y salida de la corrida en GitHub Actions (`Pruebas de API (Postman/Newman)` de la ejecucion `39689453079`) en `docs/evidencias/api-newman-consola-ci.txt`.
+- [x] Reporte HTML de Newman generado y **publicado como artifact `reporte-api`** (retencion de 7 dias) en la ejecucion `39689453079`; copia saneada versionada en `docs/evidencias/api-newman-report.html`.
+- [x] Evidencia del reporte obtenido del artifact `reporte-api` descargado de la corrida en GitHub Actions (6 KB de consola + 342 KB de HTML saneado).
+
+| Evidencia | Contenido |
+|---|---|
+| `docs/evidencias/api-newman-consola.txt` | Salida completa de Newman en local: 14 peticiones, 33 aserciones, 0 fallas |
+| `docs/evidencias/api-newman-consola-ci.txt` | Misma salida obtenida del artifact `reporte-api` de la corrida `39689453079` (GitHub Actions) |
+| `docs/evidencias/api-newman-report.html` | Reporte HTML de Newman (contenido, detalle de cada peticion y codigos de estado) saneado: contrasena, tokens JWT y claves publicables reemplazados por `***` |
 
 ### 9.5 Artefactos y despliegue
 - [x] Artifact **fitcore-apk** publicado y descargable desde la ejecucion del pipeline (retencion de 14 dias): `build/app/outputs/flutter-apk/app-release.apk` (24.6 MB comprimidos en el artifact; 53 MB el APK final).
@@ -628,9 +659,10 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 > Las capturas de la interfaz se tomaron sobre la compilacion **web** (mismo codigo, mismos repositorios y misma base de datos en memoria del modo demo) porque el dispositivo Android virtual disponible en el entorno de trabajo no mantuvo estable la sesion interactiva; el APK de release si se instalo y arranco correctamente en el emulador.
 
 ### 9.6 Backend Supabase
-- [ ] Tabla de **Table Editor** de Supabase con las 8 tablas creadas (`usuarios`, `clases`, `rutinas`, `membresias`, `pagos`, `avisos`, `planes`, `info_gimnasio`). *Pendiente: ejecutar `supabase/esquema.sql` y `supabase/esquema_extra.sql` en el SQL Editor.*
-- [ ] Configuracion de **RLS** activa en las tablas. *Pendiente: se activa junto con el esquema anterior.*
-- [ ] Usuario de prueba registrado y habilitado para las pruebas de API. *Pendiente: alta en Supabase Auth con correo confirmado.*
+- [x] Las **8 tablas** del modelo de datos existen y respondian en el proyecto real `zxsberoadrixfenzddig`: `usuarios`, `clases`, `rutinas`, `membresias`, `pagos`, `avisos`, `planes` e `info_gimnasio` (verificado con las 8 peticiones de lectura de la coleccion Newman, todas con estado **200**).
+- [x] **RLS activa**: con la clave anonima, `GET /rest/v1/usuarios` responde 200 con **0 filas** (peticion 14 de la coleccion), y sin `apikey` la API responde **401** (peticion 13). Ambas comprobaciones son asserts automaticos que se ejecutan en cada corrida del pipeline.
+- [x] **Usuario de prueba** registrado y habilitado: `prueba.fitcore@fitcore.com` en Supabase Auth, con correo confirmado, clave asignada y rol `admin` en la tabla `usuarios`; su sesion se valida con la RPC `es_admin` (respuesta `true`) y permite leer las 8 tablas. La contrasena se conserva **unicamente** como secreto `FITCORE_TEST_PASSWORD` del repositorio.
+- [x] El esquema y los scripts de creacion quedan versionados en el repositorio (`supabase/esquema.sql`, `supabase/esquema_extra.sql`) para poder recrear el backend en otro proyecto.
 
 ---
 
@@ -639,6 +671,8 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 FitCore evoluciono de un proceso de compilacion manual a un **flujo CI/CD automatizado y trazable** mediante GitHub Actions. El pipeline valida la calidad del codigo (`flutter analyze`), ejecuta **84 pruebas automatizadas con cobertura**, verifica el **contrato de la API** contra Supabase con Newman, compila el APK de liberacion con las credenciales inyectadas de forma segura (`--dart-define`) y publica el artefacto como **Release** en la rama estable.
 
 Este flujo **quedo verificado de extremo a extremo en GitHub**: la aplicacion esta publicada en el repositorio publico **https://github.com/brenivargas09-sys/Fitcore**, el pipeline **FitCore CI/CD** se ejecuta automaticamente en cada `push` a `main`, y la corrida verificativa **https://github.com/brenivargas09-sys/Fitcore/actions/runs/39679563236** completo los **6 jobs en verde**, publicando el artifact `fitcore-apk` y la **Release** con el APK de liberacion. Durante esa validacion se detecto y corrigio un fallo real del pipeline (el job de pruebas de API se detenia cuando los secretos de Supabase no estaban configurados); la correccion deja el pipeline resiliente y la integracion continua operativa.
+
+La validacion no se quedo en la simulacion: con los secretos configurados (commit `3bf50cb`), el job `api` ejecuta la coleccion Newman **contra el proyecto Supabase real** y la corrida **https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079** completo **14 peticiones y 33 aserciones con 0 fallas** (health de GoTrue y PostgREST, login valido e invalido, RPC `es_admin`, lectura autenticada de las 8 tablas, 401 sin credenciales y RLS sin fuga de filas al rol anonimo), publico el artifact `reporte-api` saneado y genero la Release `v1.0.0+1-8`. De este modo el job de pruebas de API dejo de ser un placeholder y se.convertio en una **puerta de calidad efectiva**: si el contrato con la base de datos en la nube se rompiera, no se publicaria ninguna liberacion.
 
 La arquitectura elegida —Flutter en la presentacion, repositorios con modo demo/real, y Supabase como base de datos no relacional en la nube— responde directamente al objetivo del RA: gestionar datos no estructurados (JSON) en repositorios remotos y ofrecerlos a traves de un pipeline confiable. Los SLA quedan definidos con metas medibles (99.9 % de disponibilidad, ≤ 500 ms en lecturas, RTO ≤ 4 h, RPO ≤ 24 h) y las metricas de monitoreo permiten detectar degradaciones antes de que afecten al gimnasio.
 

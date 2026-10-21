@@ -1,0 +1,100 @@
+newman
+
+FitCore - API Supabase (RA U2)
+
+❏ Autenticacion
+↳ Health - GoTrue responde
+  GET https://zxsberoadrixfenzddig.supabase.co/auth/v1/health [200 OK, 1.05kB, 301ms]
+  ✓  El servicio de autenticacion responde
+  ✓  Informa la version de GoTrue
+  ✓  Tiempo de respuesta menor a 1500 ms
+
+↳ Health - PostgREST responde
+  GET https://zxsberoadrixfenzddig.supabase.co/rest/v1/usuarios?select=id&limit=1 [200 OK, 989B, 214ms]
+  ✓  El servicio REST responde
+  ✓  Devuelve un arreglo
+  ✓  Tiempo de respuesta menor a 1500 ms
+
+↳ Sign in (email + password)
+  POST https://zxsberoadrixfenzddig.supabase.co/auth/v1/token?grant_type=password [200 OK, 2.26kB, 220ms]
+  ✓  Login correcto (200)
+  ✓  Devuelve access_token
+  ✓  Devuelve usuario
+  ✓  Tiempo de autenticacion menor a 2000 ms
+
+↳ Login rechazado con clave invalida
+  POST https://zxsberoadrixfenzddig.supabase.co/auth/v1/token?grant_type=password [400 Bad Request, 982B, 149ms]
+  ✓  Credenciales invalidas devuelven 400
+  ✓  No entrega token de acceso
+
+↳ Sesion iniciada - RPC es_admin
+  GET https://zxsberoadrixfenzddig.supabase.co/rest/v1/rpc/es_admin [200 OK, 1.04kB, 118ms]
+  ✓  La funcion es_admin responde con el token de la sesion
+  ✓  El usuario de prueba tiene rol administrativo
+
+❏ PostgREST - lectura de tablas
+↳ usuarios - perfil propio
+  GET https://zxsberoadrixfenzddig.supabase.co/rest/v1/usuarios?select=id,nombre,apellidos,rol,activo&limit=10 [200 OK, 1.52kB, 57ms]
+  ✓  Consulta autorizada (200)
+  ✓  Devuelve un arreglo
+  ✓  Respuesta menor a 1000 ms
+
+↳ clases - listado
+  GET https://zxsberoadrixfenzddig.supabase.co/rest/v1/clases?select=*&order=dia_semana [200 OK, 1.09kB, 64ms]
+  ✓  Consulta autorizada (200)
+  ✓  Devuelve arreglo de clases
+
+↳ membresias - listado
+  GET https://zxsberoadrixfenzddig.supabase.co/rest/v1/membresias?select=*&order=fecha_fin [200 OK, 1.09kB, 67ms]
+  ✓  Consulta autorizada (200)
+  ✓  Devuelve arreglo de membresias
+
+↳ pagos - listado
+  GET https://zxsberoadrixfenzddig.supabase.co/rest/v1/pagos?select=*&order=fecha.desc [200 OK, 1.09kB, 134ms]
+  ✓  Consulta autorizada (200)
+  ✓  Devuelve arreglo de pagos
+
+↳ avisos - listado
+  GET https://zxsberoadrixfenzddig.supabase.co/rest/v1/avisos?select=*&order=fecha_publicacion.desc [200 OK, 1.1kB, 83ms]
+  ✓  Consulta autorizada (200)
+  ✓  Devuelve arreglo de avisos
+
+↳ planes - listado
+  GET https://zxsberoadrixfenzddig.supabase.co/rest/v1/planes?select=*&order=precio [200 OK, 1.08kB, 61ms]
+  ✓  Consulta autorizada (200)
+  ✓  Devuelve arreglo de planes
+
+↳ info_gimnasio - registro
+  GET https://zxsberoadrixfenzddig.supabase.co/rest/v1/info_gimnasio?select=*&limit=1 [200 OK, 1.08kB, 148ms]
+  ✓  Consulta autorizada (200)
+  ✓  Devuelve arreglo
+
+↳ Seguridad - sin credenciales la API rechaza (401)
+  GET https://zxsberoadrixfenzddig.supabase.co/rest/v1/usuarios?select=* [401 Unauthorized, 1.07kB, 17ms]
+  ✓  Sin apikey la peticion es rechazada
+  ✓  No se devuelve ninguna fila
+
+↳ Seguridad - la RLS no expone filas al rol anonimo
+  GET https://zxsberoadrixfenzddig.supabase.co/rest/v1/usuarios?select=* [200 OK, 939B, 56ms]
+  ✓  La consulta responde 200
+  ✓  El rol anonimo no ve filas de usuarios
+
+┌─────────────────────────┬────────────────────┬───────────────────┐
+│                         │           executed │            failed │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│              iterations │                  1 │                 0 │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│                requests │                 14 │                 0 │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│            test-scripts │                 14 │                 0 │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│      prerequest-scripts │                  0 │                 0 │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│              assertions │                 33 │                 0 │
+├─────────────────────────┴────────────────────┴───────────────────┤
+│ total run duration: 1880ms                                       │
+├──────────────────────────────────────────────────────────────────┤
+│ total data received: 1.88kB (approx)                             │
+├──────────────────────────────────────────────────────────────────┤
+│ average response time: 120ms [min: 17ms, max: 301ms, s.d.: 76ms] │
+└──────────────────────────────────────────────────────────────────┘
