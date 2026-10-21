@@ -896,7 +896,9 @@ vinetas(doc, [
     ".github/workflows/ci-cd.yml).",
     "[x] Pull Request de ejemplo con la validación del pipeline ejecutada (rama "
     "feature/evidencias-ci-cd → main), usado para evidenciar la revisión antes de "
-    "integrar cambios.",
+    "integrar cambios: https://github.com/brenivargas09-sys/Fitcore/pull/1 (README del "
+    "proyecto, evidencias de ejecución de la aplicación y actualización del presente "
+    "documento; el pipeline se ejecuta automáticamente en cada Pull Request hacia main).",
 ])
 encabezado(doc, "9.2 GitHub Actions (pipeline)", 2)
 vinetas(doc, [

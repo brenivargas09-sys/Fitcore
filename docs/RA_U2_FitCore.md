@@ -585,7 +585,7 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 ### 9.1 Control de versiones y repositorio
 - [x] `git log --oneline` con los commits del pipeline: `d866825` (pipeline CI/CD + scripts + coleccion Postman/Newman), `625bd42` (documento tecnico RA U2 en Markdown y Word) y `923749e` (correccion del job `api` para que el pipeline no se detenga sin secretos).
 - [x] Repositorio en GitHub con la estructura completa del proyecto y la rama `main`: **https://github.com/brenivargas09-sys/Fitcore** (`lib/`, `android/`, `ios/`, `web/`, `windows/`, `linux/`, `macos/`, `test/`, `supabase/`, `api-tests/`, `scripts/`, `docs/` y `.github/workflows/ci-cd.yml`).
-- [x] Pull Request de ejemplo con la validacion del pipeline ejecutada (rama `feature/evidencias-ci-cd` → `main`), usado para evidenciar la revision antes de integrar cambios.
+- [x] Pull Request de ejemplo con la validacion del pipeline ejecutada (rama `feature/evidencias-ci-cd` → `main`), usado para evidenciar la revision antes de integrar cambios: **https://github.com/brenivargas09-sys/Fitcore/pull/1** (README del proyecto, evidencias de ejecucion de la aplicacion y actualizacion del presente documento; el pipeline se ejecuta automaticamente en cada Pull Request hacia `main`).
 
 ### 9.2 GitHub Actions (pipeline)
 - [x] Pestana **Actions** con la lista de ejecuciones de *FitCore CI/CD*: https://github.com/brenivargas09-sys/Fitcore/actions
