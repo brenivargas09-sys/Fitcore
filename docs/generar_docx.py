@@ -811,8 +811,11 @@ tabla(doc, ["Elemento", "Valor verificado"], [
     ["Workflow", ".github/workflows/ci-cd.yml (nombre: FitCore CI/CD)"],
     ["Ejecución #1 (diagnóstica)", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39536523890"],
     ["Ejecución #2 (verificativa)", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39679563236"],
+    ["Ejecución #3 (documentación)", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39681767350"],
+    ["Validación del Pull Request #1", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685009906"],
+    ["Ejecución #4 (integración del PR)", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685864184"],
     ["Artefacto de liberación", "fitcore-apk (build/app/outputs/flutter-apk/app-release.apk)"],
-    ["Release", "v1.0.0+1-2 — «FitCore v1.0.0+1 (build 2)», generada por el job despliegue, con el asset app-release.apk (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases/tag/v1.0.0%2B1-2"],
+    ["Releases publicadas", "v1.0.0+1-2, v1.0.0+1-3, v1.0.0+1-6 (una por cada push a main), cada una con el asset app-release.apk (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases"],
 ], anchos=[5.0, 11.0])
 parrafo(doc, (
     "Diagnóstico de la primera corrida. Al publicar la aplicación, el pipeline se "
@@ -843,6 +846,25 @@ parrafo(doc, (
     "(«FitCore v1.0.0+1 (build 2)») con el APK app-release.apk (53 MB) adjunto. El "
     "pipeline queda, por tanto, verificado de extremo a extremo: push → validación "
     "→ compilación → artifact → Release."
+))
+parrafo(doc, (
+    "Validación en un Pull Request (revisión antes de integrar). El cambio de código "
+    "y de documentación se integró mediante el Pull Request #1 (rama "
+    "feature/evidencias-ci-cd → main, https://github.com/brenivargas09-sys/Fitcore/pull/1). "
+    "La ejecución del workflow disparada por el Pull Request "
+    "(https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685009906) dejó los 5 "
+    "jobs ejecutables en verde (entorno, calidad, pruebas, API y compilación del APK); el "
+    "job despliegue aparece como skipped porque, por diseño, solo libera cuando la "
+    "referencia es main y el evento es push, de modo que nunca se publica una Release a "
+    "partir de un Pull Request. Al integrar el PR, la ejecución sobre main "
+    "(https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685864184) completó los "
+    "6 jobs en verde y generó una nueva Release. De esta forma queda evidenciado el "
+    "ciclo completo: push de la rama → validación en el PR → integración → liberación."
+))
+parrafo(doc, (
+    "Repetibilidad. Cada push a main produce una nueva Release con el APK adjunto "
+    "(v1.0.0+1-2, v1.0.0+1-3, v1.0.0+1-6, ...), lo que confirma que el pipeline es "
+    "reproducible y trazable y no una ejecución aislada."
 ))
 
 # ============================================================================
@@ -907,6 +929,13 @@ vinetas(doc, [
     "[x] Detalle de una ejecución exitosa con los 6 jobs en verde (entorno, calidad, "
     "pruebas, api, construye, despliegue): "
     "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39679563236",
+    "[x] Corridas posteriores en verde que confirman la repetibilidad del pipeline: "
+    "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39681767350 (6/6) y "
+    "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685864184 (6/6, "
+    "integración del Pull Request #1).",
+    "[x] Corrida de validación del Pull Request #1 (5 jobs en verde; despliegue skipped "
+    "por tratarse de un PR): "
+    "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685009906",
     "[x] Ejecución diagnóstica documentada: "
     "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39536523890 (job api en "
     "rojo por falta de secretos → corrección en el commit 923749e).",

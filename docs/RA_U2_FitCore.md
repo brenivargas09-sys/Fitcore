@@ -531,8 +531,11 @@ newman run api-tests/FitCore.postman_collection.json \
 | Workflow | `.github/workflows/ci-cd.yml` (nombre: **FitCore CI/CD**) |
 | Ejecucion #1 (diagnostica) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39536523890 |
 | Ejecucion #2 (verificativa) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39679563236 |
+| Ejecucion #3 (documentacion) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39681767350 |
+| Validacion del Pull Request #1 | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685009906 |
+| Ejecucion #4 (integracion del PR) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685864184 |
 | Artefacto de liberacion | `fitcore-apk` (`build/app/outputs/flutter-apk/app-release.apk`) |
-| Release | **v1.0.0+1-2** — "FitCore v1.0.0+1 (build 2)", generada por el job `despliegue`, con el asset `app-release.apk` (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases/tag/v1.0.0%2B1-2 |
+| Releases publicadas | **v1.0.0+1-2**, **v1.0.0+1-3**, **v1.0.0+1-6** (una por cada `push` a `main`), cada una con el asset `app-release.apk` (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases |
 
 **Diagnostico de la primera corrida.** Al publicar la aplicacion, el pipeline se ejecuto por primera vez y **4 de los 6 jobs quedaron en verde** (entorno, calidad, pruebas, construccion del APK). El job **`api` fallo** porque las pruebas de contrato de Newman dependen de los secretos `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FITCORE_TEST_EMAIL` y `FITCORE_TEST_PASSWORD`, que todavia no estaban configurados en el repositorio: sin esas credenciales la coleccion se ejecuta contra una `baseUrl` vacia. Como `despliegue` depende de `api`, el job de publicacion del Release quedo en estado **skipped** y no se genero ninguna liberacion.
 
@@ -544,6 +547,10 @@ newman run api-tests/FitCore.postman_collection.json \
 4. El job `construye` emite una advertencia cuando no hay credenciales, indicando que el APK se compila en **modo demo** (datos locales), igual que la aplicacion ejecutada sin backend.
 
 **Resultado.** En la segunda corrida los **6 jobs quedan en verde**, el artifact `fitcore-apk` se publica y el job `despliegue` crea la **Release** `v1.0.0+1-2` ("FitCore v1.0.0+1 (build 2)") con el APK `app-release.apk` (53 MB) adjunto. El pipeline queda, por tanto, **verificado de extremo a extremo**: `push` → validacion → compilacion → artifact → Release.
+
+**Validacion en un Pull Request (revision antes de integrar).** El cambio de codigo y de documentacion se integro mediante el **Pull Request #1** (rama `feature/evidencias-ci-cd` → `main`, https://github.com/brenivargas09-sys/Fitcore/pull/1). La ejecucion del workflow disparada por el Pull Request (https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685009906) dejo los **5 jobs ejecutables en verde** (entorno, calidad, pruebas, API y compilacion del APK); el job `despliegue` aparece como **skipped** porque, por diseno, solo libera cuando la referencia es `main` y el evento es `push`, de modo que **nunca se publica una Release a partir de un Pull Request**. Al integrar el PR, la ejecucion sobre `main` (https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685864184) completo los **6 jobs en verde** y genero una nueva Release. De esta forma queda evidenciado el ciclo completo: `push` de la rama → validacion en el PR → integracion → liberacion.
+
+**Repetibilidad.** Cada `push` a `main` produce una nueva Release con el APK adjunto (`v1.0.0+1-2`, `v1.0.0+1-3`, `v1.0.0+1-6`, ...), lo que confirma que el pipeline es **reproducible y trazable** y no una ejecucion aislada.
 
 ---
 
@@ -590,6 +597,8 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 ### 9.2 GitHub Actions (pipeline)
 - [x] Pestana **Actions** con la lista de ejecuciones de *FitCore CI/CD*: https://github.com/brenivargas09-sys/Fitcore/actions
 - [x] Detalle de una ejecucion exitosa con los **6 jobs en verde** (entorno, calidad, pruebas, api, construye, despliegue): https://github.com/brenivargas09-sys/Fitcore/actions/runs/39679563236
+- [x] Corridas posteriores en verde que confirman la repetibilidad del pipeline: https://github.com/brenivargas09-sys/Fitcore/actions/runs/39681767350 (6/6) y https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685864184 (6/6, integracion del Pull Request #1).
+- [x] Corrida de validacion del Pull Request #1 (5 jobs en verde; `despliegue` **skipped** por tratarse de un PR): https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685009906
 - [x] Ejecucion diagnostica documentada: https://github.com/brenivargas09-sys/Fitcore/actions/runs/39536523890 (job `api` en rojo por falta de secretos → correccion en el commit `923749e`).
 - [ ] Panel de **Secrets** del repositorio con los nombres de los secretos (sin sus valores): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FITCORE_TEST_EMAIL`, `FITCORE_TEST_PASSWORD`. *Pendiente: se configuran en **Settings > Secrets and variables > Actions**; son credenciales de Supabase que solo posee el equipo. Mientras no existan, el job `api` omite la prueba de contrato (dejandolo en verde) y el APK se compila en modo demo.*
 
