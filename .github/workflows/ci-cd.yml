@@ -179,6 +179,7 @@ jobs:
       - name: Ejecutar coleccion FitCore
         if: steps.config.outputs.listo == 'true'
         run: |
+          mkdir -p reports
           newman run api-tests/FitCore.postman_collection.json \
             -e api-tests/FitCore.postman_environment.json \
             --env-var "baseUrl=${SUPABASE_URL}" \
@@ -186,7 +187,8 @@ jobs:
             --env-var "email=${SUPABASE_EMAIL}" \
             --env-var "password=${SUPABASE_PASSWORD}" \
             --reporters cli,htmlextra \
-            --reporter-htmlextra-export reports/api-report.html
+            --reporter-htmlextra-export reports/api-report.html \
+            | tee reports/api-consola.txt
 
       - name: Registrar omision de pruebas de API
         if: steps.config.outputs.listo != 'true'
@@ -203,12 +205,24 @@ jobs:
           EOF
           echo "Pruebas de API omitidas (secretos no configurados). El resto del pipeline no se ve afectado."
 
+      - name: Sanear el reporte (ocultar credenciales)
+        if: always()
+        run: |
+          if [ -f reports/api-report.html ]; then
+            sed -i -e "s@${SUPABASE_PASSWORD}@***PASSWORD***@g" reports/api-report.html
+            sed -i -E "s@eyJ[A-Za-z0-9._-]{40,}@***JWT***@g" reports/api-report.html
+            sed -i -E "s@sb_publishable_[A-Za-z0-9_-]+@***KEY***@g" reports/api-report.html
+            echo "Reporte saneado: contrasena, tokens JWT y claves publicables ocultos."
+          fi
+
       - name: Publicar reporte de API
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: reporte-api
-          path: reports/api-report.html
+          path: |
+            reports/api-report.html
+            reports/api-consola.txt
           retention-days: 7
 
   # --------------------------------------------------------------------------

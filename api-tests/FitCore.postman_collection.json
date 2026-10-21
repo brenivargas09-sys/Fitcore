@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "FitCore - API Supabase (RA U2)",
-    "description": "Coleccion de pruebas de contrato de los servicios que consume FitCore (Flutter) contra Supabase: autenticacion (GoTrue) y PostgREST sobre las tablas usuarios, clases, membresias, pagos, avisos, planes e info_gimnasio. Las credenciales se inyectan por variables de entorno al ejecutar con Newman.",
+    "description": "Coleccion de pruebas de contrato de los servicios que consume FitCore (Flutter) contra Supabase: autenticacion (GoTrue) y PostgREST sobre las tablas usuarios, clases, membresias, pagos, avisos, planes e info_gimnasio. Las credenciales se inyectan por variables de entorno al ejecutar con Newman (baseUrl, anonKey, email, password) y nunca se versionan.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -17,14 +17,19 @@
       "name": "Autenticacion",
       "item": [
         {
-          "name": "Health - REST responde",
+          "name": "Health - GoTrue responde",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('El servicio REST responde', function () {",
+                  "pm.test('El servicio de autenticacion responde', function () {",
                   "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('Informa la version de GoTrue', function () {",
+                  "  pm.expect(body).to.have.property('name', 'GoTrue');",
+                  "  pm.expect(body).to.have.property('version');",
                   "});",
                   "pm.test('Tiempo de respuesta menor a 1500 ms', function () {",
                   "  pm.expect(pm.response.responseTime).to.be.below(1500);",
@@ -41,9 +46,47 @@
               { "key": "Authorization", "value": "Bearer {{anonKey}}" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/rest/v1/",
+              "raw": "{{baseUrl}}/auth/v1/health",
               "host": ["{{baseUrl}}"],
-              "path": ["rest", "v1", ""]
+              "path": ["auth", "v1", "health"]
+            }
+          }
+        },
+        {
+          "name": "Health - PostgREST responde",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('El servicio REST responde', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Devuelve un arreglo', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "pm.test('Tiempo de respuesta menor a 1500 ms', function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(1500);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{anonKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/usuarios?select=id&limit=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", "usuarios"],
+              "query": [
+                { "key": "select", "value": "id" },
+                { "key": "limit", "value": "1" }
+              ]
             }
           }
         },
@@ -106,6 +149,9 @@
                 "exec": [
                   "pm.test('Credenciales invalidas devuelven 400', function () {",
                   "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('No entrega token de acceso', function () {",
+                  "  pm.expect(pm.response.json()).to.not.have.property('access_token');",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -127,6 +173,37 @@
               "host": ["{{baseUrl}}"],
               "path": ["auth", "v1", "token"],
               "query": [{ "key": "grant_type", "value": "password" }]
+            }
+          }
+        },
+        {
+          "name": "Sesion iniciada - RPC es_admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('La funcion es_admin responde con el token de la sesion', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('El usuario de prueba tiene rol administrativo', function () {",
+                  "  pm.expect(pm.response.json()).to.equal(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/rpc/es_admin",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", "rpc", "es_admin"]
             }
           }
         }
@@ -360,14 +437,47 @@
           }
         },
         {
-          "name": "Seguridad - acceso sin token (RLS)",
+          "name": "Seguridad - sin credenciales la API rechaza (401)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Sin token valido la RLS bloquea (401/403)', function () {",
-                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "pm.test('Sin apikey la peticion es rechazada', function () {",
+                  "  pm.expect(pm.response.code).to.equal(401);",
+                  "});",
+                  "pm.test('No se devuelve ninguna fila', function () {",
+                  "  pm.expect(pm.response.text()).to.not.contain('apellidos');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/usuarios?select=*",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", "usuarios"],
+              "query": [{ "key": "select", "value": "*" }]
+            }
+          }
+        },
+        {
+          "name": "Seguridad - la RLS no expone filas al rol anonimo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('La consulta responde 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('El rol anonimo no ve filas de usuarios', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "  pm.expect(pm.response.json().length).to.equal(0);",
                   "});"
                 ],
                 "type": "text/javascript"
