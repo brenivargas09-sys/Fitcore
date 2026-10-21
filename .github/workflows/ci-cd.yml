@@ -144,6 +144,14 @@ jobs:
     name: Pruebas de API (Postman/Newman)
     runs-on: ubuntu-latest
     needs: entorno
+    # Los secretos se exponen como variables de entorno del job para poder
+    # comprobar su presencia en un `if:` (los secretos no pueden usarse
+    # directamente en condiciones).
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_EMAIL: ${{ secrets.FITCORE_TEST_EMAIL }}
+      SUPABASE_PASSWORD: ${{ secrets.FITCORE_TEST_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -156,12 +164,20 @@ jobs:
         run: |
           npm install -g newman newman-reporter-htmlextra
 
+      - name: Comprobar configuracion de secretos
+        id: config
+        run: |
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ] \
+             && [ -n "$SUPABASE_EMAIL" ] && [ -n "$SUPABASE_PASSWORD" ]; then
+            echo "listo=true" >> "$GITHUB_OUTPUT"
+            echo "Secretos de Supabase detectados: se ejecutan las pruebas de contrato de la API."
+          else
+            echo "listo=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Faltan secretos de Supabase (Settings > Secrets and variables > Actions). La prueba de contrato de la API se omite; el resto del pipeline continua y la app se compila en modo demo."
+          fi
+
       - name: Ejecutar coleccion FitCore
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          SUPABASE_EMAIL: ${{ secrets.FITCORE_TEST_EMAIL }}
-          SUPABASE_PASSWORD: ${{ secrets.FITCORE_TEST_PASSWORD }}
+        if: steps.config.outputs.listo == 'true'
         run: |
           newman run api-tests/FitCore.postman_collection.json \
             -e api-tests/FitCore.postman_environment.json \
@@ -171,6 +187,21 @@ jobs:
             --env-var "password=${SUPABASE_PASSWORD}" \
             --reporters cli,htmlextra \
             --reporter-htmlextra-export reports/api-report.html
+
+      - name: Registrar omision de pruebas de API
+        if: steps.config.outputs.listo != 'true'
+        run: |
+          mkdir -p reports
+          cat > reports/api-report.html <<'EOF'
+          <html><body>
+            <h1>FitCore - Pruebas de API omitidas</h1>
+            <p>No se configuraron los secretos de Supabase en el repositorio, por lo que
+               la prueba de contrato de la API no pudo ejecutarse en esta corrida.</p>
+            <p>Secretos requeridos: SUPABASE_URL, SUPABASE_ANON_KEY, FITCORE_TEST_EMAIL,
+               FITCORE_TEST_PASSWORD (Settings &gt; Secrets and variables &gt; Actions).</p>
+          </body></html>
+          EOF
+          echo "Pruebas de API omitidas (secretos no configurados). El resto del pipeline no se ve afectado."
 
       - name: Publicar reporte de API
         if: always()
@@ -209,6 +240,9 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::warning::Sin secretos de Supabase: el APK se compila en modo demo (datos locales)."
+          fi
           flutter build apk --release \
             --dart-define=SUPABASE_URL="${SUPABASE_URL}" \
             --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}"

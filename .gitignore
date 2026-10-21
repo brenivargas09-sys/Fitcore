@@ -54,3 +54,8 @@ reports/
 coverage/
 api-tests/local*.json
 android/build/reports/
+
+# Archivos temporales de Office (~$archivo.docx)
+~$*.docx
+~$*.doc
+~$*.xlsx
