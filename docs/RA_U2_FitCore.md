@@ -580,7 +580,7 @@ newman run api-tests/FitCore.postman_collection.json \
 
 ## 9. Evidencias (capturas requeridas)
 
-Para demostrar que las herramientas estan **correctamente configuradas y funcionando**, se levantaron las siguientes evidencias. Cada punto se marca con `[x]` cuando fue **obtenida y verificada**, y con `[ ]` cuando requiere una accion manual pendiente del equipo.
+Para demostrar que las herramientas estan **correctamente configuradas y funcionando**, se levantaron las siguientes evidencias. Cada punto se marca con `[x]` cuando fue **obtenida y verificada**, y con `[ ]` cuando requiere una accion manual pendiente del equipo. Las capturas de pantalla se versionan en la carpeta `docs/evidencias/` del repositorio.
 
 ### 9.1 Control de versiones y repositorio
 - [x] `git log --oneline` con los commits del pipeline: `d866825` (pipeline CI/CD + scripts + coleccion Postman/Newman), `625bd42` (documento tecnico RA U2 en Markdown y Word) y `923749e` (correccion del job `api` para que el pipeline no se detenga sin secretos).
@@ -606,7 +606,17 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 ### 9.5 Artefactos y despliegue
 - [x] Artifact **fitcore-apk** publicado y descargable desde la ejecucion del pipeline (retencion de 14 dias): `build/app/outputs/flutter-apk/app-release.apk` (24.6 MB comprimidos en el artifact; 53 MB el APK final).
 - [x] Seccion **Releases** de GitHub con el APK adjunto, generada automaticamente por el job `despliegue`: https://github.com/brenivargas09-sys/Fitcore/releases/tag/v1.0.0%2B1-2
-- [x] Aplicacion FitCore instalada y funcionando en el emulador (pantalla de login y panel administrativo), con el modo demo (`admin@fitcore.com` / `admin123`).
+- [x] **APK de release instalado en un dispositivo Android virtual** (`adb install build/app/outputs/flutter-apk/app-release.apk`; paquete `com.fitcore.fitcore`), con la actividad `com.fitcore.fitcore/.MainActivity` ejecutandose correctamente.
+- [x] **Aplicacion ejecutada de extremo a extremo con el modo demo** (`admin@fitcore.com` / `admin123`): compilacion `flutter build web --release`, servidor local `python -m http.server 8080` sobre `build/web`, inicio de sesion y navegacion por el panel administrativo (dashboard *Inicio* y modulo *Pagos*). Capturas en `docs/evidencias/`:
+
+| Captura | Contenido |
+|---|---|
+| `docs/evidencias/01_login.png` | Pantalla de acceso (seleccion del rol *Administrador*) |
+| `docs/evidencias/02_login_relleno.png` | Formulario con las credenciales de demo cargadas (`admin@fitcore.com` / `admin123`) |
+| `docs/evidencias/03_panel_admin.png` | Panel administrativo, dashboard **Inicio**: 3 socios, 1 entrenador, 3 membresias activas, $119.70 de ingresos del mes, clases de hoy y ultimos pagos |
+| `docs/evidencias/04_modulo_pagos.png` | Modulo **Pagos** del panel administrativo ($119.70 cobrados, 3 pagos, boton *Registrar pago*) |
+
+> Las capturas de la interfaz se tomaron sobre la compilacion **web** (mismo codigo, mismos repositorios y misma base de datos en memoria del modo demo) porque el dispositivo Android virtual disponible en el entorno de trabajo no mantuvo estable la sesion interactiva; el APK de release si se instalo y arranco correctamente en el emulador.
 
 ### 9.6 Backend Supabase
 - [ ] Tabla de **Table Editor** de Supabase con las 8 tablas creadas (`usuarios`, `clases`, `rutinas`, `membresias`, `pagos`, `avisos`, `planes`, `info_gimnasio`). *Pendiente: ejecutar `supabase/esquema.sql` y `supabase/esquema_extra.sql` en el SQL Editor.*

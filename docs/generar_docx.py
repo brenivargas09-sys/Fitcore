@@ -881,7 +881,8 @@ parrafo(doc, (
     "Para demostrar que las herramientas están correctamente configuradas y "
     "funcionando, se levantaron las siguientes evidencias. Cada punto se marca con "
     "[x] cuando fue obtenida y verificada, y con [ ] cuando requiere una acción "
-    "manual pendiente del equipo."
+    "manual pendiente del equipo. Las capturas de pantalla se versionan en la carpeta "
+    "docs/evidencias/ del repositorio."
 ))
 encabezado(doc, "9.1 Control de versiones y repositorio", 2)
 vinetas(doc, [
@@ -941,8 +942,23 @@ vinetas(doc, [
     "comprimidos en el artifact; 53 MB el APK final).",
     "[x] Sección Releases de GitHub con el APK adjunto, generada automáticamente por "
     "el job despliegue: https://github.com/brenivargas09-sys/Fitcore/releases/tag/v1.0.0%2B1-2",
-    "[x] Aplicación FitCore instalada y funcionando en el emulador (pantalla de login "
-    "y panel administrativo), con el modo demo (admin@fitcore.com / admin123).",
+    "[x] APK de release instalado en un dispositivo Android virtual (adb install "
+    "build/app/outputs/flutter-apk/app-release.apk; paquete com.fitcore.fitcore), con la "
+    "actividad com.fitcore.fitcore/.MainActivity ejecutándose correctamente.",
+    "[x] Aplicación ejecutada de extremo a extremo con el modo demo "
+    "(admin@fitcore.com / admin123): compilación flutter build web --release, servidor "
+    "local python -m http.server 8080 sobre build/web, inicio de sesión y navegación "
+    "por el panel administrativo (dashboard Inicio y módulo Pagos). Capturas en "
+    "docs/evidencias/: 01_login.png (pantalla de acceso), 02_login_relleno.png "
+    "(formulario con las credenciales de demo cargadas), 03_panel_admin.png (dashboard "
+    "Inicio: 3 socios, 1 entrenador, 3 membresías activas, $119.70 de ingresos del mes, "
+    "clases de hoy y últimos pagos) y 04_modulo_pagos.png (módulo Pagos: $119.70 "
+    "cobrados, 3 pagos y botón Registrar pago).",
+    "Las capturas de la interfaz se tomaron sobre la compilación web (mismo código, "
+    "mismos repositorios y misma base de datos en memoria del modo demo) porque el "
+    "dispositivo Android virtual disponible en el entorno de trabajo no mantuvo estable "
+    "la sesión interactiva; el APK de release sí se instaló y arrancó correctamente en "
+    "el emulador.",
 ])
 encabezado(doc, "9.6 Backend Supabase", 2)
 vinetas(doc, [
