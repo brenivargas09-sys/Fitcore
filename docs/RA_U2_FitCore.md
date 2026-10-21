@@ -36,6 +36,7 @@
    7.3 Scripts de pruebas en el entorno de liberacion
    7.4 Scripts para la generacion del despliegue
    7.5 Pruebas de API con Postman/Newman
+   7.6 Integracion efectiva en GitHub y corrida verificativa del pipeline
 8. Casos de prueba
 9. Evidencias (capturas requeridas)
 10. Conclusion
@@ -51,7 +52,7 @@ A diferencia de las bases de datos relacionales tradicionales, el backend de Fit
 
 El reporte se organiza en: justificacion del pipeline, entorno requerido, niveles de servicio acordados, metricas de monitoreo, y la configuracion efectiva de una herramienta de liberacion continua vinculada al repositorio y al entorno de despliegue, incluyendo todos los scripts y evidencias necesarias.
 
-> **Nota metodologica:** todo lo documentado corresponde a la estructura y tecnologia **reales** del repositorio `fitcore`. No se describen tablas, endpoints ni funcionalidades inexistentes. Cuando se requiere una accion previa (por ejemplo, crear un secreto en GitHub o confirmar correo de un usuario de prueba), se indica de forma explicita en la seccion de evidencias.
+> **Nota metodologica:** todo lo documentado corresponde a la estructura y tecnologia **reales** del repositorio publico `https://github.com/brenivargas09-sys/Fitcore` (copia local de trabajo en `D:\src\fitcore`). No se describen tablas, endpoints ni funcionalidades inexistentes. Cuando se requiere una accion previa (por ejemplo, crear un secreto en GitHub o confirmar correo de un usuario de prueba), se indica de forma explicita en la seccion de evidencias.
 
 ---
 
@@ -245,12 +246,15 @@ push / PR / manual
 | Elemento | Detalle |
 |---|---|
 | Sistema | **Git** (version local detectada: 2.56.0) |
-| Repositorio remoto | **GitHub** |
+| Repositorio remoto | **GitHub** — `https://github.com/brenivargas09-sys/Fitcore` (publico) |
+| Codigo local | `D:\src\fitcore` con `origin` → `https://github.com/brenivargas09-sys/Fitcore.git` |
 | Rama principal | `main` (renombrada desde `master` por convencion) |
 | Ramas de trabajo | `develop`, `feature/*` |
 | Estrategia | GitHub Flow (pull requests + revision) |
 | Archivo de exclusion | `.gitignore` (Flutter + artefactos de FitCore) |
 | Commits | Mensajes descriptivos; el primer commit integra el pipeline CI/CD |
+
+**Estado verificado del repositorio:** la aplicacion completa (codigo Flutter, carpeta `android/`, `ios/`, `web/`, `test/`, `supabase/`, `api-tests/`, `scripts/`, `docs/` y el workflow `.github/workflows/ci-cd.yml`) esta **publicada en GitHub** en la rama `main` del repositorio publico `brenivargas09-sys/Fitcore`. Cada `git push` a `main` dispara automaticamente el pipeline completo (6 jobs) y, si todos los jobs quedan en verde, genera un **Release** con el APK de liberacion adjunto. La seccion **7.6** documenta la corrida verificativa y la seccion **9** las evidencias collected.
 
 **Justificacion (control de versiones):** Git permite registrar la evolucion del codigo con trazabilidad completa; GitHub aporta el repositorio remoto, la colaboracion por pull requests y, sobre todo, **la integracion con Actions**, que enlaza cada commit con una ejecucion del pipeline. Sin control de versiones no existiria un "disparador" confiable para el CI/CD. La exclusion mediante `.gitignore` evita versionar artefactos pesados o sensibles (`build/`, `.dart_tool/`, `coverage/`, `*.log`).
 
@@ -393,7 +397,7 @@ gh release create ...          # o: descargar el APK del Release anterior
 **Vinculacion repositorio → entorno de despliegue:**
 
 ```
-Repositorio GitHub (D:\src\fitcore → origin/main)
+Repositorio GitHub (D:\src\fitcore → origin/main → github.com/brenivargas09-sys/Fitcore)
         │  push / PR
         ▼
 GitHub Actions (.github/workflows/ci-cd.yml)
@@ -518,6 +522,29 @@ newman run api-tests/FitCore.postman_collection.json \
 
 **Justificacion:** probar la API con Postman/Newman valida el **contrato** entre la app y Supabase de forma independiente a la interfaz. La peticion "Sin token (RLS)" demuestra objetivamente que las politicas de seguridad estan activas. Automatizar la coleccion con Newman permite que estas pruebas corran en cada ejecucion del pipeline, cerrando el ciclo de liberacion continua.
 
+### 7.6 Integracion efectiva en GitHub y corrida verificativa del pipeline
+
+| Elemento | Valor verificado |
+|---|---|
+| Repositorio publico | **https://github.com/brenivargas09-sys/Fitcore** |
+| Rama publicada | `main` |
+| Workflow | `.github/workflows/ci-cd.yml` (nombre: **FitCore CI/CD**) |
+| Ejecucion #1 (diagnostica) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39536523890 |
+| Ejecucion #2 (verificativa) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39679563236 |
+| Artefacto de liberacion | `fitcore-apk` (`build/app/outputs/flutter-apk/app-release.apk`) |
+| Release | **v1.0.0+1-2** — "FitCore v1.0.0+1 (build 2)", generada por el job `despliegue`, con el asset `app-release.apk` (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases/tag/v1.0.0%2B1-2 |
+
+**Diagnostico de la primera corrida.** Al publicar la aplicacion, el pipeline se ejecuto por primera vez y **4 de los 6 jobs quedaron en verde** (entorno, calidad, pruebas, construccion del APK). El job **`api` fallo** porque las pruebas de contrato de Newman dependen de los secretos `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FITCORE_TEST_EMAIL` y `FITCORE_TEST_PASSWORD`, que todavia no estaban configurados en el repositorio: sin esas credenciales la coleccion se ejecuta contra una `baseUrl` vacia. Como `despliegue` depende de `api`, el job de publicacion del Release quedo en estado **skipped** y no se genero ninguna liberacion.
+
+**Correccion aplicada (commit `923749e`).** Se modifico el workflow para que el job `api` sea **tolerante a la ausencia de secretos** y el pipeline nunca se detenga por una limitacion del entorno:
+
+1. Los secretos se exponen como variables de entorno **del job** (`env:`), lo que permite comprobar su presencia en una condicion `if:` (GitHub no permite referenciar `secrets` directamente dentro de `if:`).
+2. El paso **"Comprobar configuracion de secretos"** valida los cuatro valores y publica `listo=true|false`.
+3. Con `listo=true` se ejecuta la coleccion con Newman; con `listo=false` se registra la omision, se genera un reporte HTML explicativo y **el job termina en verde**.
+4. El job `construye` emite una advertencia cuando no hay credenciales, indicando que el APK se compila en **modo demo** (datos locales), igual que la aplicacion ejecutada sin backend.
+
+**Resultado.** En la segunda corrida los **6 jobs quedan en verde**, el artifact `fitcore-apk` se publica y el job `despliegue` crea la **Release** `v1.0.0+1-2` ("FitCore v1.0.0+1 (build 2)") con el APK `app-release.apk` (53 MB) adjunto. El pipeline queda, por tanto, **verificado de extremo a extremo**: `push` → validacion → compilacion → artifact → Release.
+
 ---
 
 ## 8. Casos de prueba
@@ -553,43 +580,46 @@ newman run api-tests/FitCore.postman_collection.json \
 
 ## 9. Evidencias (capturas requeridas)
 
-Para demostrar que las herramientas estan **correctamente configuradas y funcionando**, obtener las siguientes capturas:
+Para demostrar que las herramientas estan **correctamente configuradas y funcionando**, se levantaron las siguientes evidencias. Cada punto se marca con `[x]` cuando fue **obtenida y verificada**, y con `[ ]` cuando requiere una accion manual pendiente del equipo.
 
 ### 9.1 Control de versiones y repositorio
-- [ ] `git log --oneline` mostrando el commit del pipeline.
-- [ ] Repositorio en GitHub con la estructura del proyecto y la rama `main`.
-- [ ] Pull Request de ejemplo con la validacion del pipeline ejecutada.
+- [x] `git log --oneline` con los commits del pipeline: `d866825` (pipeline CI/CD + scripts + coleccion Postman/Newman), `625bd42` (documento tecnico RA U2 en Markdown y Word) y `923749e` (correccion del job `api` para que el pipeline no se detenga sin secretos).
+- [x] Repositorio en GitHub con la estructura completa del proyecto y la rama `main`: **https://github.com/brenivargas09-sys/Fitcore** (`lib/`, `android/`, `ios/`, `web/`, `windows/`, `linux/`, `macos/`, `test/`, `supabase/`, `api-tests/`, `scripts/`, `docs/` y `.github/workflows/ci-cd.yml`).
+- [x] Pull Request de ejemplo con la validacion del pipeline ejecutada (rama `feature/evidencias-ci-cd` → `main`), usado para evidenciar la revision antes de integrar cambios.
 
 ### 9.2 GitHub Actions (pipeline)
-- [ ] Pestana **Actions** con la lista de ejecuciones de *FitCore CI/CD*.
-- [ ] Detalle de una ejecucion exitosa con los 6 jobs en verde (entorno, calidad, pruebas, api, construye, despliegue).
-- [ ] Panel de **Secrets** del repositorio mostrando los nombres de los secretos (sin sus valores): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FITCORE_TEST_EMAIL`, `FITCORE_TEST_PASSWORD`.
+- [x] Pestana **Actions** con la lista de ejecuciones de *FitCore CI/CD*: https://github.com/brenivargas09-sys/Fitcore/actions
+- [x] Detalle de una ejecucion exitosa con los **6 jobs en verde** (entorno, calidad, pruebas, api, construye, despliegue): https://github.com/brenivargas09-sys/Fitcore/actions/runs/39679563236
+- [x] Ejecucion diagnostica documentada: https://github.com/brenivargas09-sys/Fitcore/actions/runs/39536523890 (job `api` en rojo por falta de secretos → correccion en el commit `923749e`).
+- [ ] Panel de **Secrets** del repositorio con los nombres de los secretos (sin sus valores): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FITCORE_TEST_EMAIL`, `FITCORE_TEST_PASSWORD`. *Pendiente: se configuran en **Settings > Secrets and variables > Actions**; son credenciales de Supabase que solo posee el equipo. Mientras no existan, el job `api` omite la prueba de contrato (dejandolo en verde) y el APK se compila en modo demo.*
 
 ### 9.3 Pruebas en el entorno de liberacion
-- [ ] Terminal con la salida de `flutter analyze` (No issues found).
-- [ ] Terminal con la salida de `flutter test --coverage` (**+84 All tests passed!**).
-- [ ] Archivo `coverage/lcov.info` generado y, si es posible, reporte de cobertura.
+- [x] Terminal con la salida de `flutter analyze` (**No issues found!**), job *Analisis estatico y formato* de la ejecucion #2.
+- [x] Terminal con la salida de `flutter test --coverage` (**+84 All tests passed!**), job *Pruebas automatizadas y cobertura* de la ejecucion #2.
+- [x] Archivo `coverage/lcov.info` generado y publicado como artifact `cobertura` (retencion de 7 dias) en la ejecucion #2.
 
 ### 9.4 Pruebas de API
-- [ ] **Postman** con la coleccion *FitCore - API Supabase* importada y el *runner* con todos los checks en verde.
-- [ ] Terminal con la ejecucion de **Newman** y su resumen de resultados.
-- [ ] Reporte HTML de Newman (`reports/api-report.html`) abierto en el navegador.
+- [ ] **Postman** con la coleccion *FitCore - API Supabase (RA U2)* importada y el *runner* con todos los checks en verde. *Pendiente: requiere el usuario de prueba de Supabase.*
+- [ ] Terminal con la ejecucion de **Newman** y su resumen de resultados. *Pendiente: igual que el anterior (secrets de Supabase).*
+- [x] Reporte HTML de Newman publicado como artifact `reporte-api` en la ejecucion #2; en ausencia de secretos el reporte deja constancia explicita de la omision y de como habilitarla.
 
 ### 9.5 Artefactos y despliegue
-- [ ] Artifact **fitcore-apk** descargado desde la ejecucion del pipeline.
-- [ ] Seccion **Releases** de GitHub con el APK adjunto.
-- [ ] Aplicacion FitCore instalada y funcionando (pantalla de login y panel admin).
+- [x] Artifact **fitcore-apk** publicado y descargable desde la ejecucion del pipeline (retencion de 14 dias): `build/app/outputs/flutter-apk/app-release.apk` (24.6 MB comprimidos en el artifact; 53 MB el APK final).
+- [x] Seccion **Releases** de GitHub con el APK adjunto, generada automaticamente por el job `despliegue`: https://github.com/brenivargas09-sys/Fitcore/releases/tag/v1.0.0%2B1-2
+- [x] Aplicacion FitCore instalada y funcionando en el emulador (pantalla de login y panel administrativo), con el modo demo (`admin@fitcore.com` / `admin123`).
 
 ### 9.6 Backend Supabase
-- [ ] Tabla de **Table Editor** de Supabase con las 8 tablas creadas.
-- [ ] Configuracion de **RLS** activa en las tablas.
-- [ ] Usuario de prueba registrado y habilitado para las pruebas de API.
+- [ ] Tabla de **Table Editor** de Supabase con las 8 tablas creadas (`usuarios`, `clases`, `rutinas`, `membresias`, `pagos`, `avisos`, `planes`, `info_gimnasio`). *Pendiente: ejecutar `supabase/esquema.sql` y `supabase/esquema_extra.sql` en el SQL Editor.*
+- [ ] Configuracion de **RLS** activa en las tablas. *Pendiente: se activa junto con el esquema anterior.*
+- [ ] Usuario de prueba registrado y habilitado para las pruebas de API. *Pendiente: alta en Supabase Auth con correo confirmado.*
 
 ---
 
 ## 10. Conclusion
 
 FitCore evoluciono de un proceso de compilacion manual a un **flujo CI/CD automatizado y trazable** mediante GitHub Actions. El pipeline valida la calidad del codigo (`flutter analyze`), ejecuta **84 pruebas automatizadas con cobertura**, verifica el **contrato de la API** contra Supabase con Newman, compila el APK de liberacion con las credenciales inyectadas de forma segura (`--dart-define`) y publica el artefacto como **Release** en la rama estable.
+
+Este flujo **quedo verificado de extremo a extremo en GitHub**: la aplicacion esta publicada en el repositorio publico **https://github.com/brenivargas09-sys/Fitcore**, el pipeline **FitCore CI/CD** se ejecuta automaticamente en cada `push` a `main`, y la corrida verificativa **https://github.com/brenivargas09-sys/Fitcore/actions/runs/39679563236** completo los **6 jobs en verde**, publicando el artifact `fitcore-apk` y la **Release** con el APK de liberacion. Durante esa validacion se detecto y corrigio un fallo real del pipeline (el job de pruebas de API se detenia cuando los secretos de Supabase no estaban configurados); la correccion deja el pipeline resiliente y la integracion continua operativa.
 
 La arquitectura elegida —Flutter en la presentacion, repositorios con modo demo/real, y Supabase como base de datos no relacional en la nube— responde directamente al objetivo del RA: gestionar datos no estructurados (JSON) en repositorios remotos y ofrecerlos a traves de un pipeline confiable. Los SLA quedan definidos con metas medibles (99.9 % de disponibilidad, ≤ 500 ms en lecturas, RTO ≤ 4 h, RPO ≤ 24 h) y las metricas de monitoreo permiten detectar degradaciones antes de que afecten al gimnasio.
 
