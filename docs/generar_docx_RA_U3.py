@@ -7,6 +7,9 @@ from docx import Document
 from docx.shared import Pt, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.section import WD_SECTION
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 import os
 
 AZUL = RGBColor(0x1E, 0x40, 0xAF)
@@ -44,6 +47,18 @@ def numeradas(doc, items):
 def tabla(doc, encabezados, filas, anchos=None):
     t = doc.add_table(rows=1, cols=len(encabezados))
     t.style = "Light Grid Accent 1"
+    t.autofit = False
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    # Layout fijo: respeta los anchos de columna declarados.
+    tblPr = t._tbl.tblPr
+    layout = OxmlElement("w:tblLayout")
+    layout.set(qn("w:type"), "fixed")
+    tblPr.append(layout)
+    # La fila de encabezado se repite en cada pagina si la tabla se parte.
+    trPr = t.rows[0]._tr.get_or_add_trPr()
+    repeticion = OxmlElement("w:tblHeader")
+    repeticion.set(qn("w:val"), "true")
+    trPr.append(repeticion)
     for i, e in enumerate(encabezados):
         c = t.rows[0].cells[i]
         c.text = ""
@@ -60,6 +75,12 @@ def tabla(doc, encabezados, filas, anchos=None):
         for fila in t.rows:
             for i, w in enumerate(anchos):
                 fila.cells[i].width = Cm(w)
+    # Las filas no se parten entre paginas: se mantienen enteras.
+    for fila in t.rows:
+        trPr = fila._tr.get_or_add_trPr()
+        cantSplit = OxmlElement("w:cantSplit")
+        cantSplit.set(qn("w:val"), "true")
+        trPr.append(cantSplit)
     doc.add_paragraph()
     return t
 
@@ -221,9 +242,17 @@ indice = [
     "   3.9 La validación del contrato de la API como puerta de calidad",
     "   3.10 Incidencias detectadas, diagnóstico y acciones correctivas",
     "   3.11 Capturas de pantalla requeridas para el cierre de la evidencia",
-    "4. [Apartado 4 del RA — a definir en el siguiente punto]",
+    "4. Entorno requerido",
+    "   4.1 Criterios de definición del entorno",
+    "   4.2 Hardware y sistema operativo",
+    "   4.3 Software de desarrollo y versiones verificadas",
+    "   4.4 Entorno de integración continua",
+    "   4.5 Entorno de servicios en la nube (Supabase)",
+    "   4.6 Entorno de ejecución en el dispositivo cliente",
+    "   4.7 Configuración del entorno y gestión de secretos",
+    "   4.8 Verificación y reproducibilidad del entorno",
     "5. [Apartado 5 del RA — a definir en el siguiente punto]",
-    "6. Conclusiones",
+    "6. Conclusiones de la entrega actual",
     "7. Referencias bibliográficas",
 ]
 for i in indice:
@@ -864,11 +893,11 @@ encabezado(doc, "3.8 Evidencia de ejecución: historial de integraciones y publi
 parrafo(
     doc,
     "El historial del repositorio es la evidencia objetiva del funcionamiento del "
-    "pipeline. A la fecha de corte de este documento (22 de octubre de 2026) se "
-    "registran 23 ejecuciones del flujo de trabajo —20 sobre la rama main y 3 "
+    "pipeline. A la fecha de corte de este documento (21 de octubre de 2026) se "
+    "registran 24 ejecuciones del flujo de trabajo —21 sobre la rama main y 3 "
     "sobre ramas de trabajo— con el siguiente "
-    "distribuido de resultados: 10 ejecuciones con conclusión success, 5 con "
-    "conclusión failure y 8 canceladas por la regla de concurrencia. En paralelo, "
+    "distribuido de resultados: 10 ejecuciones con conclusión success, 7 con "
+    "conclusión failure y 7 canceladas por la regla de concurrencia. En paralelo, "
     "el repositorio acumula 9 publicaciones versionadas en GitHub Releases, cada "
     "una con su APK descargable de aproximadamente 55,2 MB.",
 )
@@ -877,8 +906,8 @@ tabla(
     ["Ejecuciones", "Rama / evento", "Resultado", "Aporte al flujo"],
     [
         ["Runs 1–14", "main (push) y feature/evidencias-ci-cd (pull_request)", "10 con conclusión success, 3 canceladas por concurrencia y 1 con conclusión failure (run 1, anterior a la estabilización del flujo)", "Establecimiento de la línea base del pipeline y publicación de las primeras versiones"],
-        ["Runs 15–23", "main (push)", "4 con conclusión failure y 5 canceladas", "Bloqueo de la etapa «api» por credencial obsoleta en el entorno de integración continua (véase apartado 3.10)"],
-        ["Run 22 y run 23", "main (push)", "Entorno, calidad, pruebas y compilación en success; «api» en failure; despliegue omitido", "Verifica el comportamiento de la puerta de calidad: la compilación se completó y la publicación se bloqueó"],
+        ["Runs 15–24", "main (push)", "6 con conclusión failure y 4 canceladas", "Bloqueo de la etapa «api» por credencial obsoleta en el entorno de integración continua (véase apartado 3.10)"],
+        ["Runs 22, 23 y 24", "main (push)", "Entorno, calidad, pruebas y compilación en success; «api» en failure; despliegue omitido", "Verifica el comportamiento de la puerta de calidad: la compilación se completó y la publicación se bloqueó"],
         ["Releases 1–9", "main (push)", "9 publicaciones con etiqueta v1.0.0+<build> y activo app-release.apk", "Trazabilidad entre commit, versión publicada y binario distribuible"],
     ],
     anchos=[2.6, 3.6, 5.2, 4.6],
@@ -887,7 +916,7 @@ parrafo(
     doc,
     "La lectura conjunta de estos datos es la que sostiene la afirmación central de "
     "este apartado: el flujo de trabajo no es decorativo, es funcional y es "
-    "selectivo. En las ejecuciones 15 a 22 el pipeline se comportó exactamente como "
+    "selectivo. En las ejecuciones 15 a 24 el pipeline se comportó exactamente como "
     "se diseñó: la compilación del APK se completó porque las etapas técnicas "
     "eran correctas, y la publicación se omitió porque el contrato de la API no "
     "se cumplía. En un proceso manual, esa versión defectuosa habría llegado al "
@@ -1017,8 +1046,8 @@ encabezado(doc, "3.10 Incidencias detectadas, diagnóstico y acciones correctiva
 parrafo(
     doc,
     "El valor de un pipeline se demuestra, sobre todo, cuando detecta un problema. "
-    "Entre el 21 y el 22 de octubre de 2026, el flujo de trabajo bloqueó nueve "
-    "ejecuciones consecutivas de la rama main (runs 15 a 23). El registro siguiente "
+    "Entre el 20 y el 21 de octubre de 2026, el flujo de trabajo bloqueó diez "
+    "ejecuciones consecutivas de la rama main (runs 15 a 24). El registro siguiente "
     "documenta el "
     "ciclo completo de detección, diagnóstico, corrección y verificación, que se "
     "conserva como evidencia de la capacidad correctiva del proceso.",
@@ -1029,7 +1058,7 @@ tabla(
     [
         [
             "Detección",
-            "Las ejecuciones 15 a 22 terminan con conclusión failure en la etapa «Pruebas de API (Postman/Newman)», mientras que las etapas de entorno, calidad, pruebas y compilación terminan en success. El pipeline, por diseño, omite la etapa de despliegue.",
+            "Las ejecuciones 15 a 24 terminan con conclusión failure en la etapa «Pruebas de API (Postman/Newman)», mientras que las etapas de entorno, calidad, pruebas y compilación terminan en success. El pipeline, por diseño, omite la etapa de despliegue.",
         ],
         [
             "Diagnóstico",
@@ -1093,17 +1122,310 @@ nota(
 
 doc.add_page_break()
 
-# ------------------------------------------------------------------ 4 y 5
-encabezado(doc, "4. [Apartado 4 del RA — a definir en el siguiente punto]", 1)
-nota(doc, "Apartado reservado: se completa en la entrega del punto siguiente.")
+# ============================================================== 4. ENTORNO
+encabezado(doc, "4. Entorno requerido", 1)
 
+parrafo(
+    doc,
+    "Todo el proceso de desarrollo, integración, liberación y despliegue descrito "
+    "en los apartados anteriores se ejecuta sobre un entorno con características "
+    "concretas y verificables. Este apartado documenta esas características en "
+    "tres dimensiones: el entorno de desarrollo local del equipo, el entorno de "
+    "integración continua donde se compila y publica el producto, y el entorno de "
+    "servicios en la nube y de dispositivo cliente donde la aplicación se ejecuta. "
+    "La documentación de un producto que se publica en línea exige que cualquiera "
+    "pueda reproducir el proceso, por lo que cada requisito se presenta con la "
+    "fuente exacta en la que se declara dentro del repositorio.",
+)
+
+encabezado(doc, "4.1 Criterios de definición del entorno", 2)
+parrafo(
+    doc,
+    "Los requisitos del entorno se definieron con tres criterios:",
+)
+vinetas(
+    doc,
+    [
+        "Fijación de versiones: toda la cadena de herramientas queda fijada a una "
+        "versión concreta (Flutter, Java, Node, Gradle, AGP, Kotlin y NDK) para que "
+        "el binario publicado sea reproducible en cualquier máquina y en cualquier "
+        "momento.",
+        "Trazabilidad documental: cada requisito indica el archivo del repositorio "
+        "en el que se declara, de modo que el entorno es auditable y no depende de "
+        "un conocimiento informal del equipo.",
+        "Separación de secretos: ninguna credencial forma parte del entorno "
+        "versionado; el entorno se parametriza mediante secretos del repositorio y "
+        "la inyección de variables de en tiempo de compilación.",
+    ],
+)
+
+encabezado(doc, "4.2 Hardware y sistema operativo", 2)
+parrafo(
+    doc,
+    "El proyecto es una aplicación Flutter con salidas para Android, iOS, web, "
+    "Windows, macOS y Linux (las seis carpetas de plataforma están presentes en el "
+    "repositorio), si bien la publicación de la versión 1.0 se realiza exclusivamente "
+    "para Android. Los requisitos de hardware y sistema operativo son los "
+    "siguientes:",
+)
+tabla(
+    doc,
+    ["Elemento", "Requisito", "Origen del dato"],
+    [
+        ["Sistema operativo de desarrollo", "Windows 10/11 de 64 bits (entorno de trabajo del equipo, con los scripts .bat de preparación del entorno) o macOS/Linux de 64 bits (scripts .sh)", "scripts/preparar_entorno.bat y scripts/preparar_entorno.sh"],
+        ["Procesador", "Mínimo 4 núcleos con virtualización activada; se recomienda un procesador de 8 núcleos o superior para la compilación en modo release", "Recomendación técnica del equipo, contrastada con los 333 s de compilación en el runner de CI"],
+        ["Memoria RAM", "Mínimo 8 GB; se recomienda 16 GB para evitar el uso de memoria de intercambio durante la compilación de Gradle", "Recomendación técnica del equipo"],
+        ["Almacenamiento", "Mínimo 10 GB libres para el SDK de Android, el SDK de Flutter, las dependencias de Gradle y el artefacto de compilación", "Verificado sobre el tamaño del artefacto publicado (55,2 MB) y el número de dependencias transitivas"],
+        ["Espacio en la nube de ejecución", "Proyecto de Supabase con al menos 8 tablas, la extensión pgcrypto habilitada y políticas RLS configuradas", "supabase/esquema.sql (171 líneas) y supabase/esquema_extra.sql (70 líneas)"],
+        ["Runner de integración continua", "Runner estándar hospedado por GitHub (4 vCPU, 16 GB de RAM y 14 GB de SSD) sobre la imagen ubuntu-latest", "Especificación del runner estándar hospedado por GitHub, utilizado en la ejecución verificada (Ubuntu 24.04.5)"],
+        ["Dispositivo cliente", "Teléfono o tablet con Android y conexión a Internet; la aplicación requiere únicamente permiso de red", "android/app/src/main/AndroidManifest.xml"],
+    ],
+    anchos=[3.6, 7.4, 5.0],
+)
+
+encabezado(doc, "4.3 Software de desarrollo y versiones verificadas", 2)
+parrafo(
+    doc,
+    "La tabla siguiente detalla el toolchain completo exigido por el proyecto. Cada "
+    "versión está fijada de forma explícita, lo que garantiza que el entorno de "
+    "desarrollo y el entorno de integración continua sean equivalentes.",
+)
+tabla(
+    doc,
+    ["Componente", "Versión fijada", "Dónde se declara", "Función en el proceso"],
+    [
+        ["Flutter SDK", "3.47.5 (canal stable)", ".github/workflows/ci-cd.yml (env FLUTTER_VERSION)", "Compilación del APK, análisis estático y ejecución de pruebas"],
+        ["Dart SDK", "^3.13.4", "pubspec.yaml (environment.sdk)", "Lenguaje de la aplicación; restricción de compatibilidad del código"],
+        ["Java (JDK Temurin)", "17", "ci-cd.yml (env JAVA_VERSION) y android/app/build.gradle.kts", "Ejecución de Gradle y del compilador de Android"],
+        ["Node.js", "20", "ci-cd.yml (env NODE_VERSION)", "Ejecución de Newman para las pruebas de contrato de la API"],
+        ["Gradle", "9.3.1", "android/gradle/wrapper/gradle-wrapper.properties", "Sistema de construcción de Android"],
+        ["Android Gradle Plugin", "9.1.0", "android/settings.gradle.kts", "Complemento de construcción de Android"],
+        ["Kotlin", "2.4.0", "android/settings.gradle.kts", "Compilación del código Kotlin de la aplicación"],
+        ["Android NDK", "28.2.13676358", "android/app/build.gradle.kts", "Bibliotecas nativas del motor Flutter"],
+        ["Git", "Última versión estable", "Verificado por el paso 1/5 de scripts/preparar_entorno.sh y .bat", "Control de versiones e integración del código"],
+        ["Newman", "6.2.3", "Instalado en la etapa «api» con npm (npm install -g newman newman-reporter-htmlextra)", "Ejecución automatizada de la colección de pruebas de la API"],
+        ["Reglas de calidad de código", "flutter_lints 6.0.0", "analysis_options.yaml (include: package:flutter_lints/flutter.yaml)", "Conjunto de reglas de análisis estático aplicado a todo el proyecto"],
+    ],
+    anchos=[3.4, 2.8, 5.4, 4.4],
+)
+parrafo(
+    doc,
+    "Las dependencias de la aplicación están declaradas en pubspec.yaml: "
+    "supabase_flutter 2.18.3 (cliente de la API y del servicio de autenticación), "
+    "provider 6.1.5+1 (gestión de estado), intl 0.20.3 (formato de fechas y cifras) "
+    "y cupertino_icons 1.0.8. Como dependencias de desarrollo se incluyen "
+    "flutter_test y flutter_lints. El archivo pubspec.lock, versionado en el "
+    "repositorio, fija las versiones transitivas exactas, de modo que una "
+    "instalación reproducible se obtiene con flutter pub get sobre ese archivo.",
+)
+
+encabezado(doc, "4.4 Entorno de integración continua", 2)
+parrafo(
+    doc,
+    "El entorno de integración continua es una imagen controlada y desechable: cada "
+    "ejecución parte de una imagen limpia, resuelve las dependencias desde cero y "
+    "termina destruyendo el runner. Esta condición elimina el estado residual entre "
+    "ejecuciones y es la base de la reproducibilidad del proceso.",
+)
+tabla(
+    doc,
+    ["Elemento del entorno de CI", "Configuración verificada"],
+    [
+        ["Imagen del runner", "ubuntu-latest (Ubuntu 24.04.5 LTS en las ejecuciones verificadas)"],
+        ["Variables de entorno de la ejecución", "FLUTTER_VERSION=3.47.5, JAVA_VERSION=17, NODE_VERSION=20"],
+        ["Acciones de preparación", "actions/checkout@v4, actions/setup-java@v4 (distribución temurin), subosito/flutter-action@v2 (canal stable, caché habilitada), actions/setup-node@v4"],
+        ["Acciones de publicación", "actions/upload-artifact@v4 (artefactos pub-deps, cobertura, reporte-api y fitcore-apk) y softprops/action-gh-release para la Release"],
+        ["Sistema de versiones", "El repositorio y el historial de releases de GitHub, con la etiqueta v1.0.0+<build> por publicación"],
+        ["Secretos disponibles para las etapas", "SUPABASE_URL, SUPABASE_ANON_KEY (etapas «api» y «construye»), FITCORE_TEST_EMAIL y FITCORE_TEST_PASSWORD (etapa «api»)"],
+        ["Cacheo", "Caché de Flutter habilitada en la acción de instalación, con lo que la etapa de preparación resuelve dependencias en 34 s"],
+        ["Aislamiento", "Cada job ejecuta en su propio runner; el artefacto pub-deps (pubspec.lock y .dart_tool/package_config.json) es el único punto de intercambio entre la etapa de entorno y las etapas de validación"],
+    ],
+    anchos=[5.0, 11.0],
+)
+
+encabezado(doc, "4.5 Entorno de servicios en la nube (Supabase)", 2)
+parrafo(
+    doc,
+    "El backend de FitCore no es un servidor propio sino un servicio gestionado en "
+    "la nube, cuyo proyecto se identifica por la URL https://zxsberoadrixfenzddig"
+    ".supabase.co. Este modelo elimina la tarea de administrar servidores, bases de "
+        "datos y certificados, y concentra el esfuerzo del equipo en la aplicación y en su "
+    "contrato de datos.",
+)
+tabla(
+    doc,
+    ["Componente del servicio", "Función en FitCore", "Verificación"],
+    [
+        ["PostgreSQL gestionado", "Almacena las 8 tablas de negocio: usuarios, clases, rutinas, membresías, pagos, avisos, planes e info_gimnasio", "supabase/esquema.sql y supabase/esquema_extra.sql"],
+        ["Extensión pgcrypto", "Habilita la generación de identificadores uuid y funciones de apoyo para el modelo de datos", "Sentencia create extension if not exists pgcrypto en esquema.sql"],
+        ["PostgREST (API REST)", "Expone las tablas como endpoints JSON que consume la aplicación mediante el SDK de Supabase", "Consultas verificadas por la colección de pruebas (8 lecturas de tabla)"],
+        ["GoTrue (autenticación)", "Gestiona el registro, la confirmación y el inicio de sesión, y emite el access_token que autoriza las lecturas", "Etapa «api» del pipeline, verificada con las 26 aserciones de la colección"],
+        ["Row Level Security", "Restringe el acceso a cada tabla según el rol del usuario autenticado", "Función public.es_admin() y políticas create policy sobre las 8 tablas"],
+        ["Automatización de perfiles", "El trigger on_auth_user_created invoca public.crear_perfil() para crear la fila en public.usuarios al registrarse", "Definido en esquema.sql"],
+        ["Mecanismo de autenticación", "Clave pública (sb_publishable_…) entregada al cliente y clave de servicio (service_role) reservada a las tareas administrativas del backend", "Configuración de claves del proyecto Supabase"],
+    ],
+    anchos=[3.8, 7.0, 5.2],
+)
+
+encabezado(doc, "4.6 Entorno de ejecución en el dispositivo cliente", 2)
+parrafo(
+    doc,
+    "La versión 1.0 de FitCore se publica como aplicación Android. El "
+    "identificador de la aplicación es com.fitcore.fitcore y la versión declarada en "
+    "pubspec.yaml es 1.0.0+1, que se traslada al versionName y al versionCode del "
+    "paquete Android.",
+)
+tabla(
+    doc,
+    ["Requisito de ejecución", "Valor / comportamiento verificado"],
+    [
+        ["Plataforma objetivo", "Android (applicationId com.fitcore.fitcore)"],
+        ["Versión mínima y objetivo", "minSdk y targetSdk se heredan de los valores por defecto declarados por Flutter (flutter.minSdkVersion y flutter.targetSdkVersion); el requisito efectivo queda fijado, por tanto, por la versión de Flutter 3.47.5 con la que se compila"],
+        ["Niveles de API de compilación", "compileSdk heredado de Flutter; NDK 28.2.13676358 declarado de forma explícita"],
+        ["Permisos solicitados", "Únicamente android.permission.INTERNET, declarado expresamente para la conexión con Supabase (login y datos del panel). La aplicación no solicita cámara, micrófono, GPS, notificaciones, contactos, SMS ni almacenamiento externo"],
+        ["Firmado del artefacto", "La variante release se firma con la clave de depuración (signingConfig debug) conforme a android/app/build.gradle.kts; el uso de un keystore de publicación queda identificado como trabajo pendiente para el apartado de publicación y distribución"],
+        ["Canal de distribución", "GitHub Releases: el artefacto app-release.apk de 55,2 MB queda publicado y descargable bajo una URL estable por cada build"],
+        ["Comportamiento sin backend", "Si no se inyectan credenciales, la aplicación arranca en modo demo con la base en memoria DemoDB y el usuario admin@fitcore.com / admin123, lo que permite operarla y probarla sin conectividad"],
+    ],
+    anchos=[4.0, 12.0],
+)
+nota(
+    doc,
+    "Nota: la ausencia de permisos especiales es un dato favorable del producto y se "
+    "documenta aquí porque la rúbrica de la unidad exige declarar la lista de "
+    "permisos especiales que aplican al funcionamiento del software en los "
+    "dispositivos de los clientes (apartado III.5 de la guía F-DIR-43).",
+)
+
+encabezado(doc, "4.7 Configuración del entorno y gestión de secretos", 2)
+parrafo(
+    doc,
+    "El entorno se parametriza, no se codifica. La clase ConfigSupabase "
+    "(lib/core/config_supabase.dart) resuelve la configuración en este orden: "
+    "primero las constantes del propio código, que permanecen vacías en el "
+    "repositorio, y después las variables inyectadas en tiempo de compilación "
+    "mediante --dart-define. De este modo, el mismo código fuente sirve para "
+    "desarrollo, pruebas, demostración y publicación, sin que exista ninguna "
+    "credencial versionada.",
+)
+tabla(
+    doc,
+    ["Parámetro", "Valor", "Dónde se define", "Destino"],
+    [
+        ["SUPABASE_URL", "URL del proyecto de Supabase", "Secreto del repositorio (GitHub Actions)", "Variable SUPABASE_URL de la etapa «api» y --dart-define en la etapa «construye»"],
+        ["SUPABASE_ANON_KEY", "Clave pública del proyecto (sb_publishable_…)", "Secreto del repositorio", "Variable anonKey de Newman y --dart-define SUPABASE_ANON_KEY"],
+        ["FITCORE_TEST_EMAIL", "Correo del usuario de prueba", "Secreto del repositorio", "Variable email del entorno de Newman"],
+        ["FITCORE_TEST_PASSWORD", "Contraseña del usuario de prueba", "Secreto del repositorio", "Variable password del entorno de Newman"],
+        ["SUPABASE_URL y SUPABASE_ANON_KEY", "Inyectadas en el binario", "--dart-define en la etapa de compilación", "ConfigSupabase.url y ConfigSupabase.anonKey en tiempo de ejecución"],
+    ],
+    anchos=[3.8, 4.0, 4.2, 4.0],
+)
+parrafo(
+    doc,
+    "Los cuatro parámetros del pipeline existen como secretos cifrados del "
+    "repositorio: GitHub los enmascara en los registros de la ejecución y solo los "
+    "entrega a la etapa que los consume. Ninguno de ellos está en el código fuente "
+    "ni en el historial de commits, y el documento lo hace explícito precisamente "
+    "porque el diagnóstico de la incidencia descrita en el apartado 3.10 se "
+    "produjo en esta frontera: la credencial obsoleta no estaba en el repositorio, "
+    "sino en la configuración del entorno de ejecución.",
+)
+
+encabezado(doc, "4.8 Verificación y reproducibilidad del entorno", 2)
+parrafo(
+    doc,
+    "El repositorio incluye un conjunto de scripts que materializan la preparación "
+    "del entorno tanto en el equipo como en el servidor de integración continua, de "
+    "modo que la comprobación es reproducible y no depende de la memoria del "
+    "integrante:",
+)
+tabla(
+    doc,
+    ["Script", "Plataforma", "Función"],
+    [
+        ["scripts/preparar_entorno.sh y .bat", "Linux/macOS y Windows", "Verifica Git, Flutter, Java 17 y Node, y resuelve las dependencias con flutter pub get (5 comprobaciones)"],
+        ["scripts/ejecutar_pruebas.sh y .bat", "Linux/macOS y Windows", "Ejecuta el análisis estático, las pruebas automatizadas y el resumen de cobertura"],
+        ["scripts/generar_despliegue.sh y .bat", "Linux/macOS y Windows", "Compila el APK de liberación inyectando la configuración por --dart-define"],
+    ],
+    anchos=[4.6, 3.4, 8.0],
+)
+parrafo(
+    doc,
+    "La reproducibilidad se comprueba, además, de forma automática: la etapa "
+    "«entorno» del pipeline ejecuta exactamente las mismas comprobaciones sobre la "
+    "imagen ubuntu-latest y publica el resultado como artefacto, de modo que cada "
+    "publicación del producto lleva asociado el entorno exacto en el que se "
+    "construyó. Esta es la diferencia entre un proceso de entrega verificable y una "
+    "compilación manual: el entorno deja de ser una descripción del documento y pasa "
+    "a ser un dato comprobable de cada versión publicada.",
+)
+nota(
+    doc,
+    "Observación de higiene del repositorio: la raíz del proyecto contiene una copia "
+    "de la base de datos interna de Git (HEAD, config, index, hooks/, objects/ y "
+    "refs/) y dos copias duplicadas del código (fitcore/ y Fitcore001/), que suman "
+    "257 de los 480 archivos versionados. No afectan al funcionamiento del producto "
+    "ni a la reproducción del entorno, pero se recomienda retirarlos del control de "
+    "versiones para que el historial y el peso del repositorio reflejen "
+    "únicamente el código fuente del proyecto.",
+)
+
+doc.add_page_break()
+
+# ------------------------------------------------------------------ 5
 encabezado(doc, "5. [Apartado 5 del RA — a definir en el siguiente punto]", 1)
 nota(doc, "Apartado reservado: se completa en la entrega del punto siguiente.")
 
 doc.add_page_break()
 
+# ------------------------------------------------------------------ 6
+encabezado(doc, "6. Conclusiones de la entrega actual", 1)
+parrafo(
+    doc,
+    "La presente entrega documenta y verifica el proceso de integración, liberación "
+    "y despliegue continuo del proyecto FitCore. Su contenido permite afirmar, con "
+    "respaldo en datos extraídos del propio repositorio y de la propia plataforma, "
+    "que el flujo de trabajo para la liberación y el despliegue continuo está "
+    "implementado, es funcional, es selectivo y es trazable.",
+)
+vinetas(
+    doc,
+    [
+        "El flujo de trabajo está definido de forma declarativa en un único archivo "
+        "(.github/workflows/ci-cd.yml, 260 líneas) con seis etapas, tres "
+        "disparadores, control de concurrencia y una regla de publicación "
+        "condicionada a la rama main.",
+        "El comportamiento del pipeline está verificado empíricamente: 24 "
+        "ejecuciones registradas, de las cuales 10 concluyeron con éxito, y 9 "
+        "publicaciones versionadas con su APK descargable.",
+        "Las etapas se ejecutan con un tiempo de reloj de 441 s (7 min 21 s) por "
+        "línea de producción, lo que hace viable un SLA de entrega por debajo de los "
+        "diez minutos con automatización completa.",
+        "La validación del contrato de la API se ejecuta de forma automatizada en "
+        "cada integración (12 peticiones, 26 aserciones, 0 fallos), y constituye una "
+        "puerta de calidad efectiva: las ejecuciones en las que el contrato no se "
+        "cumplió bloquearon la publicación del APK.",
+        "El proceso demuestra capacidad de detección y de corrección: la "
+        "identificación de una credencial obsoleta y de dos aserciones mal "
+        "planteadas, su verificación local y su integración en la rama principal "
+        "quedan documentadas en el apartado 3.10.",
+        "El entorno requerido por el proceso se declara de forma versionada y "
+        "auditable en el apartado 4, con la fuente exacta de cada requisito.",
+    ],
+)
+parrafo(
+    doc,
+    "Queda pendiente para las siguientes entregas el desarrollo de los apartados "
+    "restantes (niveles de servicio, métricas, plan de pruebas y publicación y "
+    "distribución del software), así como la incorporación de las capturas de "
+    "pantalla listadas en el apartado 3.11, que requieren la intervención manual de "
+    "la alumna sobre las interfaces de GitHub, Supabase y el dispositivo.",
+)
+
+doc.add_page_break()
+
 # ------------------------------------------------------------------ 6. REFERENCIAS
-encabezado(doc, "Referencias bibliográficas", 1)
+encabezado(doc, "7. Referencias bibliográficas", 1)
 for ref in [
     "Flutter Foundation. (2026). Flutter Documentation. https://docs.flutter.dev",
     "Dart Team. (2026). Dart Language Tour. https://dart.dev/guides",
@@ -1119,9 +1441,6 @@ for ref in [
     parrafo(doc, ref, tamano=11)
 
 # --------------------------------------------------------- pie de página (paginación)
-from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
-
 
 def campo(parrafo, instruccion):
     run = parrafo.add_run()
