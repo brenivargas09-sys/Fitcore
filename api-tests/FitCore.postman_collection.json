@@ -1,0 +1,393 @@
+{
+  "info": {
+    "name": "FitCore - API Supabase (RA U2)",
+    "description": "Coleccion de pruebas de contrato de los servicios que consume FitCore (Flutter) contra Supabase: autenticacion (GoTrue) y PostgREST sobre las tablas usuarios, clases, membresias, pagos, avisos, planes e info_gimnasio. Las credenciales se inyectan por variables de entorno al ejecutar con Newman.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "" },
+    { "key": "anonKey", "value": "" },
+    { "key": "email", "value": "" },
+    { "key": "password", "value": "" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Autenticacion",
+      "item": [
+        {
+          "name": "Health - REST responde",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('El servicio REST responde', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Tiempo de respuesta menor a 1500 ms', function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(1500);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{anonKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", ""]
+            }
+          }
+        },
+        {
+          "name": "Sign in (email + password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login correcto (200)', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve access_token', function () {",
+                  "  pm.expect(body).to.have.property('access_token');",
+                  "});",
+                  "pm.test('Devuelve usuario', function () {",
+                  "  pm.expect(body).to.have.property('user');",
+                  "});",
+                  "if (body.access_token) {",
+                  "  pm.environment.set('token', body.access_token);",
+                  "  pm.collectionVariables.set('token', body.access_token);",
+                  "}",
+                  "if (body.user && body.user.id) {",
+                  "  pm.collectionVariables.set('userId', body.user.id);",
+                  "}",
+                  "pm.test('Tiempo de autenticacion menor a 2000 ms', function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/v1/token?grant_type=password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "v1", "token"],
+              "query": [{ "key": "grant_type", "value": "password" }]
+            }
+          }
+        },
+        {
+          "name": "Login rechazado con clave invalida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Credenciales invalidas devuelven 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"clave-incorrecta-fitcore\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/v1/token?grant_type=password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "v1", "token"],
+              "query": [{ "key": "grant_type", "value": "password" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "PostgREST - lectura de tablas",
+      "item": [
+        {
+          "name": "usuarios - perfil propio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Consulta autorizada (200)', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Devuelve un arreglo', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "pm.test('Respuesta menor a 1000 ms', function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/usuarios?select=id,nombre,apellidos,rol,activo&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", "usuarios"],
+              "query": [
+                { "key": "select", "value": "id,nombre,apellidos,rol,activo" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "clases - listado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Consulta autorizada (200)', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Devuelve arreglo de clases', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/clases?select=*&order=dia_semana",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", "clases"],
+              "query": [
+                { "key": "select", "value": "*" },
+                { "key": "order", "value": "dia_semana" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "membresias - listado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Consulta autorizada (200)', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Devuelve arreglo de membresias', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/membresias?select=*&order=fecha_fin",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", "membresias"],
+              "query": [
+                { "key": "select", "value": "*" },
+                { "key": "order", "value": "fecha_fin" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "pagos - listado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Consulta autorizada (200)', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Devuelve arreglo de pagos', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/pagos?select=*&order=fecha.desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", "pagos"],
+              "query": [
+                { "key": "select", "value": "*" },
+                { "key": "order", "value": "fecha.desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "avisos - listado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Consulta autorizada (200)', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Devuelve arreglo de avisos', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/avisos?select=*&order=fecha_publicacion.desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", "avisos"],
+              "query": [
+                { "key": "select", "value": "*" },
+                { "key": "order", "value": "fecha_publicacion.desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "planes - listado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Consulta autorizada (200)', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Devuelve arreglo de planes', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/planes?select=*&order=precio",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", "planes"],
+              "query": [
+                { "key": "select", "value": "*" },
+                { "key": "order", "value": "precio" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "info_gimnasio - registro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Consulta autorizada (200)', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Devuelve arreglo', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/info_gimnasio?select=*&limit=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", "info_gimnasio"],
+              "query": [
+                { "key": "select", "value": "*" },
+                { "key": "limit", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Seguridad - acceso sin token (RLS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Sin token valido la RLS bloquea (401/403)', function () {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/usuarios?select=*",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", "usuarios"],
+              "query": [{ "key": "select", "value": "*" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,260 @@
+# ============================================================================
+# FitCore - Pipeline de Integracion, Liberacion y Despliegue Continuo
+#
+# Plataforma : GitHub Actions
+# Disparadores:
+#   - push  -> ramas main y develop
+#   - pull_request -> hacia main
+#   - workflow_dispatch -> ejecucion manual desde la pestana Actions
+#
+# Etapas (jobs):
+#   entorno   -> prepara Flutter y valida dependencias
+#   calidad   -> analisis estatico (flutter analyze) y formato
+#   pruebas   -> pruebas unitarias/widget y cobertura
+#   api       -> pruebas de contrato de la API Supabase (Postman/Newman)
+#   construye -> compila el APK de liberacion (artifact)
+#   despliegue-> publica el artifact y el APK en GitHub Releases
+# ============================================================================
+
+name: FitCore CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Solo un pipeline activo por rama; cancela ejecuciones anteriores en curso.
+concurrency:
+  group: fitcore-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.47.5"
+  JAVA_VERSION: "17"
+  NODE_VERSION: "20"
+
+jobs:
+  # --------------------------------------------------------------------------
+  # 1. ENTORNO: prepara el entorno de liberacion (toolchain + dependencias)
+  # --------------------------------------------------------------------------
+  entorno:
+    name: Preparar entorno de liberacion
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Mostrar versiones
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Resolver dependencias
+        run: flutter pub get
+
+      - name: Publicar .dart_tool para los demas jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: pub-deps
+          path: |
+            pubspec.lock
+            .dart_tool/package_config.json
+          retention-days: 1
+
+  # --------------------------------------------------------------------------
+  # 2. CALIDAD: analisis estatico y verificacion de formato
+  # --------------------------------------------------------------------------
+  calidad:
+    name: Analisis estatico y formato
+    runs-on: ubuntu-latest
+    needs: entorno
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Dependencias
+        run: flutter pub get
+
+      - name: Formato (reporte, no bloqueante en archivos generados)
+        run: dart format --output=none --set-exit-if-changed lib test || true
+
+      - name: Analisis estatico
+        run: flutter analyze
+
+  # --------------------------------------------------------------------------
+  # 3. PRUEBAS: unitarias/widget en modo demo + cobertura
+  # --------------------------------------------------------------------------
+  pruebas:
+    name: Pruebas automatizadas y cobertura
+    runs-on: ubuntu-latest
+    needs: entorno
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Dependencias
+        run: flutter pub get
+
+      - name: Ejecutar pruebas con cobertura
+        run: flutter test --coverage
+
+      - name: Resumen de cobertura
+        run: |
+          if [ -f coverage/lcov.info ]; then
+            echo "Cobertura generada en coverage/lcov.info"
+            awk -F: '/LF:/{lf+=$2} /LH:/{lh+=$2} END {if (lf>0) printf "Cobertura de lineas: %.2f%%\n", (lh/lf)*100}' coverage/lcov.info
+          fi
+
+      - name: Publicar cobertura
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura
+          path: coverage/lcov.info
+          retention-days: 7
+
+  # --------------------------------------------------------------------------
+  # 4. API: pruebas de contrato de los servicios Supabase con Newman
+  # --------------------------------------------------------------------------
+  api:
+    name: Pruebas de API (Postman/Newman)
+    runs-on: ubuntu-latest
+    needs: entorno
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Instalar Newman y reporteros
+        run: |
+          npm install -g newman newman-reporter-htmlextra
+
+      - name: Ejecutar coleccion FitCore
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_EMAIL: ${{ secrets.FITCORE_TEST_EMAIL }}
+          SUPABASE_PASSWORD: ${{ secrets.FITCORE_TEST_PASSWORD }}
+        run: |
+          newman run api-tests/FitCore.postman_collection.json \
+            -e api-tests/FitCore.postman_environment.json \
+            --env-var "baseUrl=${SUPABASE_URL}" \
+            --env-var "anonKey=${SUPABASE_ANON_KEY}" \
+            --env-var "email=${SUPABASE_EMAIL}" \
+            --env-var "password=${SUPABASE_PASSWORD}" \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export reports/api-report.html
+
+      - name: Publicar reporte de API
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-api
+          path: reports/api-report.html
+          retention-days: 7
+
+  # --------------------------------------------------------------------------
+  # 5. CONSTRUYE: compila el APK de liberacion
+  # --------------------------------------------------------------------------
+  construye:
+    name: Compilar APK de liberacion
+    runs-on: ubuntu-latest
+    needs: [calidad, pruebas]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Dependencias
+        run: flutter pub get
+
+      - name: Compilar APK release
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL="${SUPABASE_URL}" \
+            --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}"
+
+      - name: Publicar APK como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fitcore-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
+
+  # --------------------------------------------------------------------------
+  # 6. DESPLIEGUE: libera el APK en GitHub Releases (solo en main)
+  # --------------------------------------------------------------------------
+  despliegue:
+    name: Desplegar (GitHub Releases)
+    runs-on: ubuntu-latest
+    needs: [construye, api]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descargar APK compilado
+        uses: actions/download-artifact@v4
+        with:
+          name: fitcore-apk
+          path: dist
+
+      - name: Leer version del pubspec
+        id: version
+        run: |
+          VERSION=$(awk '/^version:/{print $2}' pubspec.yaml)
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Crear Release y adjuntar APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}-${{ github.run_number }}
+          name: FitCore v${{ steps.version.outputs.version }} (build ${{ github.run_number }})
+          body: |
+            Liberacion automatica de FitCore generada por el pipeline CI/CD.
+            - Commit: ${{ github.sha }}
+            - Rama: ${{ github.ref_name }}
+            - Pruebas: unitarias/widget + contrato API (Newman)
+          files: dist/app-release.apk
+          draft: false
+          prerelease: false
