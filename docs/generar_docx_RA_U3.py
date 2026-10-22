@@ -865,10 +865,10 @@ parrafo(
     doc,
     "El historial del repositorio es la evidencia objetiva del funcionamiento del "
     "pipeline. A la fecha de corte de este documento (22 de octubre de 2026) se "
-    "registran 22 ejecuciones del flujo de trabajo —20 sobre la rama main y 2 "
-    "sobre la rama de trabajo feature/evidencias-ci-cd— con el siguiente "
+    "registran 23 ejecuciones del flujo de trabajo —20 sobre la rama main y 3 "
+    "sobre ramas de trabajo— con el siguiente "
     "distribuido de resultados: 10 ejecuciones con conclusión success, 5 con "
-    "conclusión failure y 7 canceladas por la regla de concurrencia. En paralelo, "
+    "conclusión failure y 8 canceladas por la regla de concurrencia. En paralelo, "
     "el repositorio acumula 9 publicaciones versionadas en GitHub Releases, cada "
     "una con su APK descargable de aproximadamente 55,2 MB.",
 )
@@ -877,8 +877,8 @@ tabla(
     ["Ejecuciones", "Rama / evento", "Resultado", "Aporte al flujo"],
     [
         ["Runs 1–14", "main (push) y feature/evidencias-ci-cd (pull_request)", "10 con conclusión success, 3 canceladas por concurrencia y 1 con conclusión failure (run 1, anterior a la estabilización del flujo)", "Establecimiento de la línea base del pipeline y publicación de las primeras versiones"],
-        ["Runs 15–21", "main (push)", "3 con conclusión failure y 4 canceladas", "Bloqueo de la etapa «api» por credencial obsoleta en el entorno de integración continua (véase apartado 3.10)"],
-        ["Run 22", "main (push)", "Entorno, calidad, pruebas y compilación en success; «api» en failure; despliegue omitido", "Verifica el comportamiento de la puerta de calidad: la compilación se completó y la publicación se bloqueó"],
+        ["Runs 15–23", "main (push)", "4 con conclusión failure y 5 canceladas", "Bloqueo de la etapa «api» por credencial obsoleta en el entorno de integración continua (véase apartado 3.10)"],
+        ["Run 22 y run 23", "main (push)", "Entorno, calidad, pruebas y compilación en success; «api» en failure; despliegue omitido", "Verifica el comportamiento de la puerta de calidad: la compilación se completó y la publicación se bloqueó"],
         ["Releases 1–9", "main (push)", "9 publicaciones con etiqueta v1.0.0+<build> y activo app-release.apk", "Trazabilidad entre commit, versión publicada y binario distribuible"],
     ],
     anchos=[2.6, 3.6, 5.2, 4.6],
@@ -1017,8 +1017,8 @@ encabezado(doc, "3.10 Incidencias detectadas, diagnóstico y acciones correctiva
 parrafo(
     doc,
     "El valor de un pipeline se demuestra, sobre todo, cuando detecta un problema. "
-    "Entre el 21 y el 22 de octubre de 2026, el flujo de trabajo bloqueó ocho "
-    "ejecuciones consecutivas de la rama main (runs 15 a 22). El registro siguiente "
+    "Entre el 21 y el 22 de octubre de 2026, el flujo de trabajo bloqueó nueve "
+    "ejecuciones consecutivas de la rama main (runs 15 a 23). El registro siguiente "
     "documenta el "
     "ciclo completo de detección, diagnóstico, corrección y verificación, que se "
     "conserva como evidencia de la capacidad correctiva del proceso.",
@@ -1183,4 +1183,5 @@ for destino in candidatos:
         print("No se pudo escribir en", destino, "->", exc.__class__.__name__)
 else:
     raise SystemExit("No se pudo guardar el documento en ninguna ruta.")
+
 
