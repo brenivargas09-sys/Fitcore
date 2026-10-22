@@ -156,6 +156,36 @@ jobs:
         run: |
           npm install -g newman newman-reporter-htmlextra
 
+      - name: Validar configuracion del entorno
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_EMAIL: ${{ secrets.FITCORE_TEST_EMAIL }}
+          SUPABASE_PASSWORD: ${{ secrets.FITCORE_TEST_PASSWORD }}
+        run: |
+          set -e
+          error=0
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ] || \
+             [ -z "$SUPABASE_EMAIL" ] || [ -z "$SUPABASE_PASSWORD" ]; then
+            echo "::error::Faltan secretos obligatorios: SUPABASE_URL, SUPABASE_ANON_KEY, FITCORE_TEST_EMAIL y FITCORE_TEST_PASSWORD deben estar definidos en Settings > Secrets and variables > Actions."
+            error=1
+          fi
+          case "$SUPABASE_URL" in
+            https://*.supabase.co) ;;
+            *)
+              echo "::error::El secreto SUPABASE_URL no contiene una URL de proyecto de Supabase (https://<referencia>.supabase.co). Revisa que en ese campo no se haya pegado la clave publica sb_publishable_... ni la clave JWT."
+              error=1
+              ;;
+          esac
+          case "$SUPABASE_ANON_KEY" in
+            sb_publishable_*|eyJ*) ;;
+            *)
+              echo "::error::El secreto SUPABASE_ANON_KEY no contiene una clave publica de Supabase (sb_publishable_... o clave JWT eyJ...). Revisa que en ese campo no se haya pegado la URL del proyecto."
+              error=1
+              ;;
+          esac
+          exit $error
+
       - name: Ejecutar coleccion FitCore
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
