@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/rest/v1/usuarios?select=*"
+method: GET
+queryParams:
+  select: "*"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Sin apikey la peticion es rechazada', function () {
+        pm.expect(pm.response.code).to.equal(401);
+      });
+      pm.test('No se devuelve ninguna fila', function () {
+        pm.expect(pm.response.text()).to.not.contain('apellidos');
+      });
+    language: text/javascript
+order: 8000

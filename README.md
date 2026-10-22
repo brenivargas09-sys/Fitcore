@@ -34,9 +34,11 @@ lib/
   pantallas/   Login, registro, panel administrativo
   widgets/     Widgets comunes
 supabase/      Esquema SQL (tablas, RLS, politicas, trigger de perfil)
-api-tests/     Coleccion Postman + entorno para las pruebas de contrato
+api-tests/     Coleccion Postman v2.1 JSON + entorno para las pruebas de contrato (Newman / CI)
+postman/       Coleccion Postman v3 YAML + entorno (formato nativo de Postman Desktop)
+.postman/      Registro de recursos del espacio de trabajo local de Postman
 scripts/       Scripts de entorno, pruebas y despliegue (.sh y .bat)
-docs/          Reporte tecnico del RA U2 (Markdown + Word)
+docs/          Reporte tecnico del RA U2 (Markdown + Word) y evidencias
 ```
 
 ## Requisitos
@@ -92,6 +94,39 @@ newman run api-tests/FitCore.postman_collection.json \
   --env-var "password=tu-password" \
   --reporters cli,htmlextra --reporter-htmlextra-export reports/api-report.html
 ```
+
+### Pruebas de contrato de la API (Postman Desktop, ejecucion interactiva)
+
+La misma coleccion (14 peticiones, 33 aserciones) tambien se ejecuta de forma **visual** desde la
+aplicacion **Postman Desktop 12.33.2** (`winget install Postman.Postman`). El repositorio ya esta
+preparado en el formato nativo de Postman 12 (*Local Mode*, YAML v3):
+
+```
+postman/collections/FitCore - API Supabase/   # coleccion (YAML v3)
+postman/environments/FitCore - Entorno Supabase.environment.yaml   # entorno con credenciales (NO versionado)
+postman/environments/FitCore - Entorno Supabase (plantilla).environment.yaml  # plantilla versionada
+.postman/resources.yaml                              # registra la coleccion y el entorno
+```
+
+Procedimiento:
+
+1. Abre **Postman Desktop** y carga la carpeta del proyecto (`D:\src\fitcore`) como espacio de trabajo local.
+2. En la pestana **COLLECTIONS** del panel izquierdo apareces la coleccion `FitCore - API Supabase (RA U2)`.
+3. Copia la plantilla del entorno a `postman/environments/FitCore - Entorno Supabase.environment.yaml` y
+   completa `baseUrl`, `anonKey`, `email` y `password` con las credenciales de tu proyecto Supabase
+   (ese archivo esta en `.gitignore`: nunca se versionan credenciales).
+4. Selecciona el entorno `FitCore - Entorno Supabase` en el selector superior derecho.
+5. Pulsa **Run** -> revisa el orden de ejecucion (14 de 14) -> **Start run**.
+6. El resultado aparece en el panel del runner y en la pestana **Runs** de la coleccion.
+
+Resultado verificado contra Supabase real: **33 aserciones aprobadas, 0 fallidas** (9 s 817 ms, 357 ms de
+respuesta media). La evidencia esta en `docs/evidencias/postman-desktop-corrida.txt` y en las capturas
+`05_postman_coleccion.png` ... `11_postman_historial_corridas.png`.
+
+> Newman 6.x solo admite colecciones JSON v2.1, por eso el repositorio conserva ambas versiones:
+> `api-tests/FitCore.postman_collection.json` (v2.1, la que usa el pipeline) y
+> `postman/collections/...` (v3 YAML, la que abre Postman Desktop). La migracion la hace Postman y
+> conserva los 33 scripts de verificacion intactos.
 
 ## Integracion y liberacion continua (CI/CD)
 

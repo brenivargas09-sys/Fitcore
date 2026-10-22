@@ -271,6 +271,7 @@ push / PR / manual
 | Editor | Visual Studio Code / Android Studio | Desarrollo |
 | Backend | **Supabase** (PostgreSQL gestionado) | Base de datos remota y API |
 | Node.js | 20+ / local v24 | Ejecucion de Newman (pruebas de API) |
+| Cliente de pruebas | **Postman Desktop 12.33.2** (Windows) | Ejecucion interactiva de la coleccion (Collection Runner) y edicion del entorno |
 | Control de versiones | Git 2.56 + GitHub | Versionado |
 | CI/CD | GitHub Actions | Pipeline automatizado |
 
@@ -299,6 +300,7 @@ push / PR / manual
 | Android | `android/app/build.gradle.kts` | `applicationId = com.fitcore.fitcore`, `compileSdk`/`targetSdk` desde Flutter, `JavaVersion.VERSION_17`, `ndkVersion 28.2.13676358` |
 | GitHub Actions | `.github/workflows/ci-cd.yml` | `on: push[main,develop]/pull_request/workflow_dispatch`, `concurrency`, jobs y `--dart-define` |
 | Newman | `api-tests/FitCore.postman_collection.json` | Variables `baseUrl`, `anonKey`, `email`, `password`, `token`, `userId` |
+| Postman Desktop (Local Mode) | `.postman/resources.yaml`, `postman/collections/`, `postman/environments/`, `postman/globals/workspace.globals.yaml` | Coleccion v3 YAML, entorno con las variables de la corrida y globals del espacio de trabajo |
 | Supabase RLS | `supabase/esquema*.sql` | Funcion `es_admin()`, politicas por tabla y rol |
 | Git/DevOps | `.gitignore` | Excluye `build/`, `.dart_tool/`, `coverage/`, `*.log`, `reports/` |
 
@@ -489,8 +491,11 @@ flutter build apk --release \
 ### 7.5 Pruebas de API con Postman/Newman
 
 **Archivos:**
-- `api-tests/FitCore.postman_collection.json`
-- `api-tests/FitCore.postman_environment.json`
+- `api-tests/FitCore.postman_collection.json` (coleccion **v2.1 JSON**, usada por Newman y por el pipeline)
+- `api-tests/FitCore.postman_environment.json` (entorno v2.1 JSON, con variables vacias)
+- `postman/collections/FitCore - API Supabase/` (coleccion **v3 YAML** nativa de Postman 12, usada por Postman Desktop)
+- `postman/environments/FitCore - Entorno Supabase (plantilla).environment.yaml` (plantilla del entorno con variables vacias)
+- `.postman/resources.yaml` (registra la coleccion y el entorno del espacio de trabajo local de Postman)
 
 **Ejecucion local:**
 
@@ -524,6 +529,28 @@ newman run api-tests/FitCore.postman_collection.json \
 | 14 | Seguridad | RLS ante el rol anonimo | `GET /rest/v1/usuarios` (solo `apikey` anonima) | Status 200 y **0 filas** expuestas |
 
 **Resultado real (Supabase `zxsberoadrixfenzddig`):** `14 requests / 14 test-scripts / 33 assertions`, **0 fallas**, duracion total 1.88 s y tiempo promedio de respuesta 120 ms (minimo 17 ms, maximo 301 ms).
+
+**Corrida real dentro de Postman Desktop (aplicacion de escritorio).** La misma coleccion se ejecuto tambien de forma **interactiva y visual** en la aplicacion Postman Desktop 12.33.2 instalada en el equipo de trabajo, contra el mismo Supabase real (no solo por linea de comandos):
+
+| Elemento | Valor verificado |
+|---|---|
+| Aplicacion | **Postman Desktop 12.33.2** en modo local (*Local Mode*), con el repositorio del proyecto abierto como espacio de trabajo |
+| Coleccion | `FitCore - API Supabase (RA U2)` en **v3 YAML nativo de Postman 12** (`postman/collections/FitCore - API Supabase/`), migrada por el propio Postman desde el JSON v2.1 |
+| Entorno | `FitCore - Entorno Supabase` (`postman/environments/`); solo la **plantilla** con variables vacias se versiona, el entorno con credenciales reales esta en `.gitignore` |
+| Ejecucion | Boton **Run** -> *Run order* (**14 of 14 selected**) -> *Start run*; tipo *Functional*, metodo *Local*, 1 iteracion |
+| Resultado | **33 aserciones: 33 aprobadas, 0 fallidas, 0 omitidas, 0 errores** |
+| Metricas | duracion **9 s 817 ms**, tiempo medio de respuesta **357 ms**, historial visible en la pestana **Runs** |
+| Evidencia | `docs/evidencias/postman-desktop-corrida.txt` y capturas `05_postman_coleccion.png` ... `11_postman_historial_corridas.png` |
+
+**Procedimiento reproducible por el equipo (el mismo usado para generar las capturas):**
+
+1. Abrir **Postman Desktop** y cargar la carpeta del proyecto (`D:\src\fitcore`) como espacio de trabajo local.
+2. En la pestana **COLLECTIONS** del panel izquierdo aparece la coleccion `FitCore - API Supabase (RA U2)` leida del disco en formato v3 YAML.
+3. En el selector superior derecho elegir el entorno `FitCore - Entorno Supabase` (credenciales reales; la version con variables vacias es la plantilla versionada).
+4. Pulsar **Run**, verificar el orden de ejecucion (14 de 14) y pulsar **Start run**.
+5. Revisar el resultado en el panel del runner y en la pestana **Runs** de la coleccion: `All tests 33 | Passed 33 | Failed 0 | Skipped 0 | Errors 0`.
+
+> **Nota de formato:** Newman 6.x solo admite colecciones JSON v2.1, por lo que el repositorio conserva **las dos representaciones** de la misma prueba: `api-tests/FitCore.postman_collection.json` (v2.1, la que ejecuta el pipeline con Newman) y `postman/collections/FitCore - API Supabase/` (v3 YAML, la que abre Postman Desktop). La conversion la realiza Postman automaticamente y conserva intactos los 33 scripts de verificacion (`pm.test`), por lo que ambas ejecuciones prueban exactamente lo mismo.
 
 ### 7.5.1 Verificacion del backend con el cliente de la aplicacion
 
@@ -656,6 +683,17 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 - [x] Reporte HTML de Newman generado y **publicado como artifact `reporte-api`** (retencion de 7 dias) en la ejecucion `39689453079`; copia saneada versionada en `docs/evidencias/api-newman-report.html`.
 - [x] Evidencia del reporte obtenido del artifact `reporte-api` descargado de la corrida en GitHub Actions (6 KB de consola + 342 KB de HTML saneado).
 - [x] Terminal con la salida de la **verificacion del backend con el cliente de la aplicacion** (`tool/verificar_backend.dart`): login real, `es_admin = true`, las 8 tablas en 200, RLS sin fuga y 401 sin credenciales: `docs/evidencias/verificacion-backend.txt`. El mismo script se ejecuta en el pipeline (job *Pruebas automatizadas y cobertura*) como puerta de calidad.
+- [x] **Pruebas ejecutadas dentro de la aplicacion Postman Desktop 12.33.2** (no solo por linea de comandos): la coleccion aparece en la pestana **COLLECTIONS** del panel izquierdo del modo local, se ejecuto con el **Collection Runner** (*Run* -> *Start run*, 14 de 14 peticiones) y devolvio **33 aprobadas / 0 fallidas / 0 errores**, duracion 9 s 817 ms y 357 ms de respuesta media. Registro de la corrida en la pestana **Runs** de la coleccion y detalle en `docs/evidencias/postman-desktop-corrida.txt`.
+
+| Captura de Postman Desktop | Contenido |
+|---|---|
+| `docs/evidencias/05_postman_coleccion.png` | Coleccion `FitCore - API Supabase (RA U2)` abierta en Postman Desktop (14 peticiones, 2 grupos, boton *Run*) |
+| `docs/evidencias/06_postman_runner_resultados.png` | Resultado del Collection Runner: **Passed 33 / Failed 0** con el codigo de estado y el tiempo de cada peticion |
+| `docs/evidencias/07_postman_pruebas_aprobadas.png` | Detalle de las aserciones **PASS** de las peticiones 1 a 9 del runner |
+| `docs/evidencias/08_postman_pruebas_aprobadas_seguridad.png` | Detalle de las aserciones **PASS** de las peticiones 10 a 14, incluidas las de seguridad (401 sin credenciales y RLS sin fuga) |
+| `docs/evidencias/09_postman_respuesta_200.png` | Peticion enviada desde la pestana de la request: **200 OK** en 703 ms con el panel de pruebas **33/33** |
+| `docs/evidencias/10_postman_peticion_detalle.png` | Editor de la peticion `GET {{baseUrl}}/auth/v1/health` con el entorno `FitCore - Entorno Supabase` seleccionado |
+| `docs/evidencias/11_postman_historial_corridas.png` | Historial de la corrida en la pestana **Runs**: origen *Runner*, entorno, 1 iteracion, 9 s 817 ms, 33/33 y 357 ms de respuesta media |
 
 | Evidencia | Contenido |
 |---|---|
@@ -663,6 +701,7 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 | `docs/evidencias/api-newman-consola-ci.txt` | Misma salida obtenida del artifact `reporte-api` de la corrida `39689453079` (GitHub Actions) |
 | `docs/evidencias/api-newman-report.html` | Reporte HTML de Newman (contenido, detalle de cada peticion y codigos de estado) saneado: contrasena, tokens JWT y claves publicables reemplazados por `***` |
 | `docs/evidencias/verificacion-backend.txt` | Salida de `tool/verificar_backend.dart`: login real, RPC `es_admin`, lectura de las 8 tablas, RLS y 401 sin credenciales — todas las comprobaciones `[OK]` |
+| `docs/evidencias/postman-desktop-corrida.txt` | Transcripcion de la corrida ejecutada en Postman Desktop 12.33.2: 33 aserciones aprobadas, 0 fallidas, 9 s 817 ms, 357 ms de respuesta media y detalle de las 14 peticiones |
 
 ### 9.5 Artefactos y despliegue
 - [x] Artifact **fitcore-apk** publicado y descargable desde la ejecucion del pipeline (retencion de 14 dias): `build/app/outputs/flutter-apk/app-release.apk` (24.6 MB comprimidos en el artifact; 53 MB el APK final).
@@ -694,7 +733,9 @@ FitCore evoluciono de un proceso de compilacion manual a un **flujo CI/CD automa
 
 Este flujo **quedo verificado de extremo a extremo en GitHub**: la aplicacion esta publicada en el repositorio publico **https://github.com/brenivargas09-sys/Fitcore**, el pipeline **FitCore CI/CD** se ejecuta automaticamente en cada `push` a `main`, y la corrida verificativa **https://github.com/brenivargas09-sys/Fitcore/actions/runs/39679563236** completo los **6 jobs en verde**, publicando el artifact `fitcore-apk` y la **Release** con el APK de liberacion. Durante esa validacion se detecto y corrigio un fallo real del pipeline (el job de pruebas de API se detenia cuando los secretos de Supabase no estaban configurados); la correccion deja el pipeline resiliente y la integracion continua operativa.
 
-La validacion no se quedo en la simulacion: con los secretos configurados (commit `3bf50cb`), el job `api` ejecuta la coleccion Newman **contra el proyecto Supabase real** y la corrida **https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079** completo **14 peticiones y 33 aserciones con 0 fallas** (health de GoTrue y PostgREST, login valido e invalido, RPC `es_admin`, lectura autenticada de las 8 tablas, 401 sin credenciales y RLS sin fuga de filas al rol anonimo), publico el artifact `reporte-api` saneado y genero la Release `v1.0.0+1-8`. De este modo el job de pruebas de API dejo de ser un placeholder y se.convertio en una **puerta de calidad efectiva**: si el contrato con la base de datos en la nube se rompiera, no se publicaria ninguna liberacion.
+La validacion no se quedo en la simulacion: con los secretos configurados (commit `3bf50cb`), el job `api` ejecuta la coleccion Newman **contra el proyecto Supabase real** y la corrida **https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079** completo **14 peticiones y 33 aserciones con 0 fallas** (health de GoTrue y PostgREST, login valido e invalido, RPC `es_admin`, lectura autenticada de las 8 tablas, 401 sin credenciales y RLS sin fuga de filas al rol anonimo), publico el artifact `reporte-api` saneado y genero la Release `v1.0.0+1-8`. De este modo el job de pruebas de API dejo de ser un placeholder y se convirtio en una **puerta de calidad efectiva**: si el contrato con la base de datos en la nube se rompiera, no se publicaria ninguna liberacion.
+
+Las mismas pruebas se ejecutaron **de forma interactiva en Postman Desktop 12.33.2**, con la coleccion migrada al formato **v3 YAML** nativo de Postman 12 y versionada en `postman/collections/`: el *Collection Runner* ejecuto las 14 peticiones contra el mismo Supabase real y devolvio **33 aserciones aprobadas, 0 fallidas, 0 errores** en 9 s 817 ms (357 ms de respuesta media), con el historial de la corrida registrado en la pestana *Runs* y las capturas de pantalla versionadas en `docs/evidencias/`. Esto confirma que el contrato verificado por el pipeline es el mismo que el equipo puede reproducir en su maquina desde la aplicacion de Postman, sin depender de la linea de comandos.
 
 La arquitectura elegida —Flutter en la presentacion, repositorios con modo demo/real, y Supabase como base de datos no relacional en la nube— responde directamente al objetivo del RA: gestionar datos no estructurados (JSON) en repositorios remotos y ofrecerlos a traves de un pipeline confiable. Los SLA quedan definidos con metas medibles (99.9 % de disponibilidad, ≤ 500 ms en lecturas, RTO ≤ 4 h, RPO ≤ 24 h) y las metricas de monitoreo permiten detectar degradaciones antes de que afecten al gimnasio.
 

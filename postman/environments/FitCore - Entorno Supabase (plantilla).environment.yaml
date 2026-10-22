@@ -1,0 +1,14 @@
+name: FitCore - Entorno Supabase (plantilla)
+values:
+  - key: baseUrl
+    value: ''
+  - key: anonKey
+    value: ''
+  - key: email
+    value: ''
+  - key: password
+    value: ''
+  - key: token
+    value: ''
+  - key: userId
+    value: ''

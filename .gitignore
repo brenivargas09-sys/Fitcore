@@ -55,6 +55,10 @@ coverage/
 api-tests/local*.json
 android/build/reports/
 
+# Entorno de Postman con credenciales reales (nunca se versiona).
+# La version con variables vacias es: postman/environments/FitCore - Entorno Supabase (plantilla).environment.yaml
+postman/environments/FitCore - Entorno Supabase.environment.yaml
+
 # Archivos temporales de Office (~$archivo.docx)
 ~$*.docx
 ~$*.doc

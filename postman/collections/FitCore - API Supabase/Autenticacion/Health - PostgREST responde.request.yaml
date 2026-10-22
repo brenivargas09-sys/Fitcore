@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/rest/v1/usuarios?select=id&limit=1"
+method: GET
+headers:
+  apikey: "{{anonKey}}"
+  Authorization: Bearer {{anonKey}}
+queryParams:
+  select: id
+  limit: "1"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('El servicio REST responde', function () {
+        pm.response.to.have.status(200);
+      });
+      pm.test('Devuelve un arreglo', function () {
+        pm.expect(pm.response.json()).to.be.an('array');
+      });
+      pm.test('Tiempo de respuesta menor a 1500 ms', function () {
+        pm.expect(pm.response.responseTime).to.be.below(1500);
+      });
+    language: text/javascript
+order: 2000

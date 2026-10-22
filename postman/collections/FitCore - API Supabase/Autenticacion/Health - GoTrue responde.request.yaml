@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/v1/health"
+method: GET
+headers:
+  apikey: "{{anonKey}}"
+  Authorization: Bearer {{anonKey}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('El servicio de autenticacion responde', function () {
+        pm.response.to.have.status(200);
+      });
+      const body = pm.response.json();
+      pm.test('Informa la version de GoTrue', function () {
+        pm.expect(body).to.have.property('name', 'GoTrue');
+        pm.expect(body).to.have.property('version');
+      });
+      pm.test('Tiempo de respuesta menor a 1500 ms', function () {
+        pm.expect(pm.response.responseTime).to.be.below(1500);
+      });
+    language: text/javascript
+order: 1000

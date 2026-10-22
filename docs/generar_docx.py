@@ -575,6 +575,7 @@ tabla(doc, ["Componente", "Herramienta / versión", "Propósito"], [
     ["Editor", "VS Code / Android Studio", "Desarrollo"],
     ["Backend", "Supabase (PostgreSQL gestionado)", "Base de datos remota y API"],
     ["Node.js", "20+ / local v24", "Ejecución de Newman"],
+    ["Cliente de pruebas", "Postman Desktop 12.33.2 (Windows)", "Ejecución interactiva de la colección (Collection Runner) y edición del entorno"],
     ["Control de versiones", "Git 2.56 + GitHub", "Versionado"],
     ["CI/CD", "GitHub Actions", "Pipeline automatizado"],
 ], anchos=[4.0, 6.0, 6.0])
@@ -608,6 +609,7 @@ tabla(doc, ["Herramienta", "Archivo", "Parámetros clave"], [
     ["Android", "android/app/build.gradle.kts", "applicationId com.fitcore.fitcore, Java 17, ndkVersion 28.2.13676358"],
     ["GitHub Actions", ".github/workflows/ci-cd.yml", "on push/PR/workflow_dispatch, concurrency, 6 jobs, --dart-define"],
     ["Newman", "api-tests/FitCore.postman_collection.json", "Variables baseUrl, anonKey, email, password, token, userId"],
+    ["Postman Desktop (Local Mode)", ".postman/resources.yaml, postman/collections/, postman/environments/, postman/globals/", "Colección v3 YAML, entorno con las variables de la corrida y globals del espacio de trabajo"],
     ["Supabase RLS", "supabase/esquema*.sql", "Función es_admin(), políticas por tabla y rol"],
     ["Git / DevOps", ".gitignore", "Excluye build/, .dart_tool/, coverage/, *.log, reports/"],
 ], anchos=[3.2, 6.0, 6.8])
@@ -773,7 +775,15 @@ codigo(doc, (
 parrafo(doc, "Justificación: genera el artefacto inyectando las credenciales por --dart-define y falla si faltan, garantizando el backend correcto.")
 
 encabezado(doc, "7.5 Pruebas de API con Postman/Newman", 2)
-parrafo(doc, "Archivos: api-tests/FitCore.postman_collection.json y api-tests/FitCore.postman_environment.json.")
+parrafo(doc, (
+    "Archivos: api-tests/FitCore.postman_collection.json (colección v2.1 JSON, usada por "
+    "Newman y por el pipeline), api-tests/FitCore.postman_environment.json (entorno v2.1 con "
+    "variables vacías), postman/collections/FitCore - API Supabase/ (colección v3 YAML "
+    "nativa de Postman 12, usada por Postman Desktop), "
+    "postman/environments/FitCore - Entorno Supabase (plantilla).environment.yaml (plantilla "
+    "del entorno) y .postman/resources.yaml (registro de la colección y el entorno del "
+    "espacio de trabajo local de Postman)."
+))
 parrafo(doc, "Ejecución local:")
 codigo(doc, (
     "newman run api-tests/FitCore.postman_collection.json \\\n"
@@ -806,6 +816,40 @@ parrafo(doc, (
     "test-scripts / 33 assertions, 0 fallas, duración total 1.88 s y tiempo promedio de "
     "respuesta 120 ms (mínimo 17 ms, máximo 301 ms)."
 ), negrita=True)
+parrafo(doc, (
+    "Corrida real dentro de Postman Desktop (aplicación de escritorio). La misma colección se "
+    "ejecutó también de forma interactiva y visual en la aplicación Postman Desktop 12.33.2 "
+    "instalada en el equipo de trabajo, contra el mismo Supabase real (no solo por línea de "
+    "comandos)."
+))
+tabla(doc, ["Elemento", "Valor verificado"], [
+    ["Aplicación", "Postman Desktop 12.33.2 en modo local (Local Mode), con el repositorio del proyecto abierto como espacio de trabajo"],
+    ["Colección", "FitCore - API Supabase (RA U2) en v3 YAML nativo de Postman 12 (postman/collections/), migrada por Postman desde el JSON v2.1"],
+    ["Entorno", "FitCore - Entorno Supabase (postman/environments/); solo la plantilla con variables vacías se versiona"],
+    ["Ejecución", "Botón Run -> Run order (14 of 14 selected) -> Start run; tipo Functional, método Local, 1 iteración"],
+    ["Resultado", "33 aserciones: 33 aprobadas, 0 fallidas, 0 omitidas, 0 errores"],
+    ["Métricas", "duración 9 s 817 ms, tiempo medio de respuesta 357 ms, historial visible en la pestaña Runs"],
+    ["Evidencia", "docs/evidencias/postman-desktop-corrida.txt y capturas 05_postman_coleccion.png a 11_postman_historial_corridas.png"],
+], anchos=[3.2, 13.0])
+parrafo(doc, "Procedimiento reproducible por el equipo (el mismo usado para generar las capturas):", negrita=True)
+parrafo(doc, (
+    "1) Abrir Postman Desktop y cargar la carpeta del proyecto (D:\\src\\fitcore) como espacio de "
+    "trabajo local. 2) En la pestaña COLLECTIONS del panel izquierdo aparece la colección "
+    "FitCore - API Supabase (RA U2) leída del disco en formato v3 YAML. 3) En el selector "
+    "superior derecho elegir el entorno FitCore - Entorno Supabase (credenciales reales; la "
+    "versión con variables vacías es la plantilla versionada). 4) Pulsar Run, verificar el "
+    "orden de ejecución (14 de 14) y pulsar Start run. 5) Revisar el resultado en el panel del "
+    "runner y en la pestaña Runs de la colección: All tests 33 | Passed 33 | Failed 0 | "
+    "Skipped 0 | Errors 0."
+))
+parrafo(doc, (
+    "Nota de formato: Newman 6.x solo admite colecciones JSON v2.1, por lo que el repositorio "
+    "conserva las dos representaciones de la misma prueba: api-tests/FitCore.postman_collection.json "
+    "(v2.1, la que ejecuta el pipeline con Newman) y postman/collections/FitCore - API Supabase "
+    "(RA U2)/ (v3 YAML, la que abre Postman Desktop). La conversión la realiza Postman "
+    "automáticamente y conserva intactos los 33 scripts de verificación (pm.test), por lo que "
+    "ambas ejecuciones prueban exactamente lo mismo."
+))
 encabezado(doc, "7.5.1 Verificación del backend con el cliente de la aplicación", 3)
 parrafo(doc, (
     "La colección de Postman prueba el contrato HTTP; para comprobar además que la capa "
@@ -1069,12 +1113,28 @@ vinetas(doc, [
     "en 200, RLS sin fuga y 401 sin credenciales: docs/evidencias/verificacion-backend.txt. "
     "El mismo script se ejecuta en el pipeline (job Pruebas automatizadas y cobertura) como "
     "puerta de calidad.",
+    "[x] Pruebas ejecutadas dentro de la aplicación Postman Desktop 12.33.2 (no solo por "
+    "línea de comandos): la colección aparece en la pestaña COLLECTIONS del panel izquierdo "
+    "del modo local, se ejecutó con el Collection Runner (Run -> Start run, 14 de 14 "
+    "peticiones) y devolvió 33 aprobadas / 0 fallidas / 0 errores, duración 9 s 817 ms y "
+    "357 ms de respuesta media. Registro de la corrida en la pestaña Runs de la colección y "
+    "detalle en docs/evidencias/postman-desktop-corrida.txt.",
 ])
+tabla(doc, ["Captura de Postman Desktop", "Contenido"], [
+    ["docs/evidencias/05_postman_coleccion.png", "Colección FitCore - API Supabase (RA U2) abierta en Postman Desktop (14 peticiones, 2 grupos, botón Run)"],
+    ["docs/evidencias/06_postman_runner_resultados.png", "Resultado del Collection Runner: Passed 33 / Failed 0 con el código de estado y el tiempo de cada petición"],
+    ["docs/evidencias/07_postman_pruebas_aprobadas.png", "Detalle de las aserciones PASS de las peticiones 1 a 9 del runner"],
+    ["docs/evidencias/08_postman_pruebas_aprobadas_seguridad.png", "Detalle de las aserciones PASS de las peticiones 10 a 14, incluidas las de seguridad (401 sin credenciales y RLS sin fuga)"],
+    ["docs/evidencias/09_postman_respuesta_200.png", "Petición enviada desde la pestaña de la request: 200 OK en 703 ms con el panel de pruebas 33/33"],
+    ["docs/evidencias/10_postman_peticion_detalle.png", "Editor de la petición GET {{baseUrl}}/auth/v1/health con el entorno FitCore - Entorno Supabase seleccionado"],
+    ["docs/evidencias/11_postman_historial_corridas.png", "Historial de la corrida en la pestaña Runs: origen Runner, entorno, 1 iteración, 9 s 817 ms, 33/33 y 357 ms de respuesta media"],
+], anchos=[6.2, 9.8])
 tabla(doc, ["Evidencia", "Contenido"], [
     ["docs/evidencias/api-newman-consola.txt", "Salida completa de Newman en local: 14 peticiones, 33 aserciones, 0 fallas"],
     ["docs/evidencias/api-newman-consola-ci.txt", "Misma salida obtenida del artifact reporte-api de la corrida 39689453079 (GitHub Actions)"],
     ["docs/evidencias/api-newman-report.html", "Reporte HTML de Newman (contenido, detalle de cada petición y códigos de estado) saneado: contraseña, tokens JWT y claves publicables reemplazados por ***"],
     ["docs/evidencias/verificacion-backend.txt", "Salida de tool/verificar_backend.dart: login real, RPC es_admin, lectura de las 8 tablas, RLS y 401 sin credenciales — todas las comprobaciones [OK]"],
+    ["docs/evidencias/postman-desktop-corrida.txt", "Transcripción de la corrida ejecutada en Postman Desktop 12.33.2: 33 aserciones aprobadas, 0 fallidas, 9 s 817 ms, 357 ms de respuesta media y detalle de las 14 peticiones"],
 ], anchos=[6.0, 10.0])
 encabezado(doc, "9.5 Artefactos y despliegue", 2)
 vinetas(doc, [
@@ -1159,6 +1219,16 @@ parrafo(doc, (
     "la Release v1.0.0+1-8. De este modo el job de pruebas de API dejó de ser un placeholder "
     "y se convirtió en una puerta de calidad efectiva: si el contrato con la base de datos "
     "en la nube se rompiera, no se publicaría ninguna liberación."
+))
+parrafo(doc, (
+    "Las mismas pruebas se ejecutaron de forma interactiva en Postman Desktop 12.33.2, con "
+    "la colección migrada al formato v3 YAML nativo de Postman 12 y versionada en "
+    "postman/collections/: el Collection Runner ejecutó las 14 peticiones contra el mismo "
+    "Supabase real y devolvió 33 aserciones aprobadas, 0 fallidas y 0 errores en 9 s 817 ms "
+    "(357 ms de respuesta media), con el historial de la corrida registrado en la pestaña Runs "
+    "y las capturas de pantalla versionadas en docs/evidencias/. Esto confirma que el contrato "
+    "verificado por el pipeline es el mismo que el equipo puede reproducir en su máquina desde "
+    "la aplicación de Postman, sin depender de la línea de comandos."
 ))
 parrafo(doc, (
     "La arquitectura elegida —Flutter en la presentación, repositorios con modo "

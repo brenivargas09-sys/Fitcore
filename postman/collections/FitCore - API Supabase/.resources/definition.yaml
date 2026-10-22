@@ -1,0 +1,9 @@
+$kind: collection
+description: "Coleccion de pruebas de contrato de los servicios que consume FitCore (Flutter) contra Supabase: autenticacion (GoTrue) y PostgREST sobre las tablas usuarios, clases, membresias, pagos, avisos, planes e info_gimnasio. Las credenciales se inyectan por variables de entorno al ejecutar con Newman (baseUrl, anonKey, email, password) y nunca se versionan."
+variables:
+  baseUrl: ""
+  anonKey: ""
+  email: ""
+  password: ""
+  token: ""
+  userId: ""

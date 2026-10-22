@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/rest/v1/rpc/es_admin"
+method: GET
+headers:
+  apikey: "{{anonKey}}"
+  Authorization: Bearer {{token}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('La funcion es_admin responde con el token de la sesion', function () {
+        pm.response.to.have.status(200);
+      });
+      pm.test('El usuario de prueba tiene rol administrativo', function () {
+        pm.expect(pm.response.json()).to.equal(true);
+      });
+    language: text/javascript
+order: 5000

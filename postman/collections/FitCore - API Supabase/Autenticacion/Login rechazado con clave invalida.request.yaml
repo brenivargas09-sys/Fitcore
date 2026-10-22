@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/v1/token?grant_type=password"
+method: POST
+headers:
+  apikey: "{{anonKey}}"
+  Content-Type: application/json
+queryParams:
+  grant_type: password
+body:
+  type: text
+  content: |-
+    {
+      "email": "{{email}}",
+      "password": "clave-incorrecta-fitcore"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Credenciales invalidas devuelven 400', function () {
+        pm.response.to.have.status(400);
+      });
+      pm.test('No entrega token de acceso', function () {
+        pm.expect(pm.response.json()).to.not.have.property('access_token');
+      });
+    language: text/javascript
+order: 4000

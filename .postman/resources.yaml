@@ -1,0 +1,12 @@
+# Use this workspace to collaborate
+workspace:
+  id: 0fbf2b39-2dcd-4c60-842b-e7eaddb06bb9
+
+# FitCore - recursos locales de Postman en formato v3 (YAML nativo de Postman 12).
+# La version en JSON v2.1 (api-tests/*.postman_collection.json) se mantiene para Newman/CI.
+
+localResources:
+  collections:
+    - ../postman/collections/FitCore - API Supabase
+  environments:
+    - ../postman/environments/FitCore - Entorno Supabase.environment.yaml

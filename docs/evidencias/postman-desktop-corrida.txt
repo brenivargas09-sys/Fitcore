@@ -1,0 +1,81 @@
+FITCORE - CORRIDA REAL EN POSTMAN DESKTOP (Collection Runner)
+==============================================================================
+Fecha de la corrida : 21 de octubre de 2026, 08:26:28 PM
+Aplicacion          : Postman Desktop 12.33.2 (modo local / Local Mode)
+Coleccion           : FitCore - API Supabase (RA U2)
+Entorno             : FitCore - Entorno Supabase
+Origen de la corrida: Runner (Collection Runner, ejecucion local)
+Iteraciones         : 1
+Duracion            : 9s 817ms
+Pruebas             : 33 | Aprobadas: 33 | Fallidas: 0 | Omitidas: 0 | Errores: 0
+Tiempo medio resp.  : 357 ms
+
+RESULTADO POR PETICION (33 aserciones, todas PASS)
+------------------------------------------------------------------------------
+ 1. Health - GoTrue responde
+       - PASS El servicio de autenticacion responde
+       - PASS Informa la version de GoTrue
+       - PASS Tiempo de respuesta menor a 1500 ms
+
+ 2. Health - PostgREST responde
+       - PASS El servicio REST responde
+       - PASS Devuelve un arreglo
+       - PASS Tiempo de respuesta menor a 1500 ms
+
+ 3. Sign in (email + password)
+       - PASS Login correcto (200)
+       - PASS Devuelve access_token
+       - PASS Devuelve usuario
+       - PASS Tiempo de autenticacion menor a 2000 ms
+
+ 4. Login rechazado con clave invalida
+       - PASS Credenciales invalidas devuelven 400
+       - PASS No entrega token de acceso
+
+ 5. Sesion iniciada - RPC es_admin
+       - PASS La funcion es_admin responde con el token de la sesion
+       - PASS El usuario de prueba tiene rol administrativo
+
+ 6. usuarios - perfil propio
+       - PASS Consulta autorizada (200)
+       - PASS Devuelve un arreglo
+       - PASS Respuesta menor a 1000 ms
+
+ 7. clases - listado
+       - PASS Consulta autorizada (200)
+       - PASS Devuelve arreglo de clases
+
+ 8. membresias - listado
+       - PASS Consulta autorizada (200)
+       - PASS Devuelve arreglo de membresias
+
+ 9. pagos - listado
+       - PASS Consulta autorizada (200)
+       - PASS Devuelve arreglo de pagos
+
+10. avisos - listado
+       - PASS Consulta autorizada (200)
+       - PASS Devuelve arreglo de avisos
+
+11. planes - listado
+       - PASS Consulta autorizada (200)
+       - PASS Devuelve arreglo de planes
+
+12. info_gimnasio - registro
+       - PASS Consulta autorizada (200)
+       - PASS Devuelve arreglo
+
+13. Seguridad - sin credenciales la API rechaza (401)
+       - PASS Sin apikey la peticion es rechazada
+       - PASS No se devuelve ninguna fila
+
+14. Seguridad - la RLS no expone filas al rol anonimo
+       - PASS La consulta responde 200
+       - PASS El rol anonimo no ve filas de usuarios
+
+==============================================================================
+Resultado global: 33/33 aserciones aprobadas, 0 fallas (100 % aprobado)
+Capturas de esta corrida: docs/evidencias/05_postman_coleccion.png,
+  06_postman_runner_resultados.png, 07_postman_pruebas_aprobadas.png,
+  08_postman_pruebas_aprobadas_seguridad.png, 09_postman_respuesta_200.png,
+  10_postman_peticion_detalle.png, 11_postman_historial_corridas.png
