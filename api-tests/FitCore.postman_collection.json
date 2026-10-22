@@ -5,25 +5,43 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "" },
-    { "key": "anonKey", "value": "" },
-    { "key": "email", "value": "" },
-    { "key": "password", "value": "" },
-    { "key": "token", "value": "" },
-    { "key": "userId", "value": "" }
+    {
+      "key": "baseUrl",
+      "value": ""
+    },
+    {
+      "key": "anonKey",
+      "value": ""
+    },
+    {
+      "key": "email",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    }
   ],
   "item": [
     {
       "name": "Autenticacion",
       "item": [
         {
-          "name": "Health - REST responde",
+          "name": "Health - GoTrue responde",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('El servicio REST responde', function () {",
+                  "pm.test('El servicio de autenticacion responde', function () {",
                   "  pm.response.to.have.status(200);",
                   "});",
                   "pm.test('Tiempo de respuesta menor a 1500 ms', function () {",
@@ -37,13 +55,67 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "apikey", "value": "{{anonKey}}" },
-              { "key": "Authorization", "value": "Bearer {{anonKey}}" }
+              {
+                "key": "apikey",
+                "value": "{{anonKey}}"
+              }
             ],
             "url": {
-              "raw": "{{baseUrl}}/rest/v1/",
-              "host": ["{{baseUrl}}"],
-              "path": ["rest", "v1", ""]
+              "raw": "{{baseUrl}}/auth/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Health - PostgREST responde",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('El servicio REST responde', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Devuelve un arreglo', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "pm.test('Tiempo de respuesta menor a 1500 ms', function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(1500);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{anonKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{anonKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/avisos?select=id&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rest",
+                "v1",
+                "avisos"
+              ]
             }
           }
         },
@@ -82,8 +154,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "apikey", "value": "{{anonKey}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "apikey",
+                "value": "{{anonKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -91,9 +169,20 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/v1/token?grant_type=password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "v1", "token"],
-              "query": [{ "key": "grant_type", "value": "password" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
             }
           }
         },
@@ -115,8 +204,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "apikey", "value": "{{anonKey}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "apikey",
+                "value": "{{anonKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -124,9 +219,20 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/v1/token?grant_type=password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "v1", "token"],
-              "query": [{ "key": "grant_type", "value": "password" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
             }
           }
         }
@@ -159,16 +265,34 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "apikey", "value": "{{anonKey}}" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "apikey",
+                "value": "{{anonKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/rest/v1/usuarios?select=id,nombre,apellidos,rol,activo&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["rest", "v1", "usuarios"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rest",
+                "v1",
+                "usuarios"
+              ],
               "query": [
-                { "key": "select", "value": "id,nombre,apellidos,rol,activo" },
-                { "key": "limit", "value": "10" }
+                {
+                  "key": "select",
+                  "value": "id,nombre,apellidos,rol,activo"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           }
@@ -190,16 +314,34 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "apikey", "value": "{{anonKey}}" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "apikey",
+                "value": "{{anonKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/rest/v1/clases?select=*&order=dia_semana",
-              "host": ["{{baseUrl}}"],
-              "path": ["rest", "v1", "clases"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rest",
+                "v1",
+                "clases"
+              ],
               "query": [
-                { "key": "select", "value": "*" },
-                { "key": "order", "value": "dia_semana" }
+                {
+                  "key": "select",
+                  "value": "*"
+                },
+                {
+                  "key": "order",
+                  "value": "dia_semana"
+                }
               ]
             }
           }
@@ -221,16 +363,34 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "apikey", "value": "{{anonKey}}" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "apikey",
+                "value": "{{anonKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/rest/v1/membresias?select=*&order=fecha_fin",
-              "host": ["{{baseUrl}}"],
-              "path": ["rest", "v1", "membresias"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rest",
+                "v1",
+                "membresias"
+              ],
               "query": [
-                { "key": "select", "value": "*" },
-                { "key": "order", "value": "fecha_fin" }
+                {
+                  "key": "select",
+                  "value": "*"
+                },
+                {
+                  "key": "order",
+                  "value": "fecha_fin"
+                }
               ]
             }
           }
@@ -252,16 +412,34 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "apikey", "value": "{{anonKey}}" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "apikey",
+                "value": "{{anonKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/rest/v1/pagos?select=*&order=fecha.desc",
-              "host": ["{{baseUrl}}"],
-              "path": ["rest", "v1", "pagos"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rest",
+                "v1",
+                "pagos"
+              ],
               "query": [
-                { "key": "select", "value": "*" },
-                { "key": "order", "value": "fecha.desc" }
+                {
+                  "key": "select",
+                  "value": "*"
+                },
+                {
+                  "key": "order",
+                  "value": "fecha.desc"
+                }
               ]
             }
           }
@@ -283,16 +461,34 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "apikey", "value": "{{anonKey}}" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "apikey",
+                "value": "{{anonKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/rest/v1/avisos?select=*&order=fecha_publicacion.desc",
-              "host": ["{{baseUrl}}"],
-              "path": ["rest", "v1", "avisos"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rest",
+                "v1",
+                "avisos"
+              ],
               "query": [
-                { "key": "select", "value": "*" },
-                { "key": "order", "value": "fecha_publicacion.desc" }
+                {
+                  "key": "select",
+                  "value": "*"
+                },
+                {
+                  "key": "order",
+                  "value": "fecha_publicacion.desc"
+                }
               ]
             }
           }
@@ -314,16 +510,34 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "apikey", "value": "{{anonKey}}" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "apikey",
+                "value": "{{anonKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/rest/v1/planes?select=*&order=precio",
-              "host": ["{{baseUrl}}"],
-              "path": ["rest", "v1", "planes"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rest",
+                "v1",
+                "planes"
+              ],
               "query": [
-                { "key": "select", "value": "*" },
-                { "key": "order", "value": "precio" }
+                {
+                  "key": "select",
+                  "value": "*"
+                },
+                {
+                  "key": "order",
+                  "value": "precio"
+                }
               ]
             }
           }
@@ -345,16 +559,34 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "apikey", "value": "{{anonKey}}" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "apikey",
+                "value": "{{anonKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/rest/v1/info_gimnasio?select=*&limit=1",
-              "host": ["{{baseUrl}}"],
-              "path": ["rest", "v1", "info_gimnasio"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rest",
+                "v1",
+                "info_gimnasio"
+              ],
               "query": [
-                { "key": "select", "value": "*" },
-                { "key": "limit", "value": "1" }
+                {
+                  "key": "select",
+                  "value": "*"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
               ]
             }
           }
@@ -366,8 +598,13 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Sin token valido la RLS bloquea (401/403)', function () {",
-                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "pm.test('Sin token la RLS impide leer datos ajenos', function () {",
+                  "  const code = pm.response.code;",
+                  "  if (code === 200) {",
+                  "    pm.expect(pm.response.json()).to.be.an('array').that.is.empty;",
+                  "  } else {",
+                  "    pm.expect([401, 403]).to.include(code);",
+                  "  }",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -377,13 +614,27 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "apikey", "value": "{{anonKey}}" }
+              {
+                "key": "apikey",
+                "value": "{{anonKey}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/rest/v1/usuarios?select=*",
-              "host": ["{{baseUrl}}"],
-              "path": ["rest", "v1", "usuarios"],
-              "query": [{ "key": "select", "value": "*" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rest",
+                "v1",
+                "usuarios"
+              ],
+              "query": [
+                {
+                  "key": "select",
+                  "value": "*"
+                }
+              ]
             }
           }
         }
