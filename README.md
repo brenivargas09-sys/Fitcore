@@ -1,19 +1,17 @@
-# FitCore - Versión 1.0
+# App Móvil FitCore - Versión 1.0
 
 ## ¿Qué es FitCore?
 
-FitCore es una aplicación móvil desarrollada en Flutter para el seguimiento y gestión de rutinas de entrenamiento fitness.
+FitCore es una aplicación móvil desarrollada en Flutter. En esta primera versión (1.0) únicamente se han implementado el módulo de inicio de sesión y el panel administrativo.
 
-## ¿Qué hace?
+## ¿Qué hace actualmente?
 
-- **Seguimiento de rutinas**: Permite crear, visualizar y seguir rutinas de ejercicio personalizadas.
-- **Control de progreso**: Registra y monitorea el avance físico del usuario.
-- **Gestión de entrenamientos**: Organiza ejercicios por grupos musculares y series/repeticiones.
-- **Interfaz intuitiva**: Diseño simple y amigable para facilitar el uso diario.
+- **Inicio de sesión (Login)**: Permite a los usuarios autenticarse con sus credenciales para acceder a la aplicación.
+- **Panel Administrativo**: Tras iniciar sesión correctamente, el administrador accede a su panel correspondiente.
 
 ## ¿Qué contiene?
 
-- lib/ - Código fuente principal de la aplicación en Dart/Flutter
+- lib/ - Código fuente principal en Dart/Flutter (pantallas de login y panel administrativo)
 - ndroid/ - Configuración y código nativo para Android
 - ios/ - Configuración y código nativo para iOS
 - web/ - Configuración para versión web
