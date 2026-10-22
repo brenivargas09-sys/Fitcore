@@ -1,17 +1,29 @@
-# fitcore
+# FitCore - Versión 1.0
 
-A new Flutter project.
+## ¿Qué es FitCore?
 
-## Getting Started
+FitCore es una aplicación móvil desarrollada en Flutter para el seguimiento y gestión de rutinas de entrenamiento fitness.
 
-This project is a starting point for a Flutter application.
+## ¿Qué hace?
 
-A few resources to get you started if this is your first Flutter project:
+- **Seguimiento de rutinas**: Permite crear, visualizar y seguir rutinas de ejercicio personalizadas.
+- **Control de progreso**: Registra y monitorea el avance físico del usuario.
+- **Gestión de entrenamientos**: Organiza ejercicios por grupos musculares y series/repeticiones.
+- **Interfaz intuitiva**: Diseño simple y amigable para facilitar el uso diario.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## ¿Qué contiene?
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- lib/ - Código fuente principal de la aplicación en Dart/Flutter
+- ndroid/ - Configuración y código nativo para Android
+- ios/ - Configuración y código nativo para iOS
+- web/ - Configuración para versión web
+- windows/ - Configuración para versión Windows
+- ssets/ - Recursos gráficos e imágenes
+- pi-tests/ - Colección de pruebas API con Postman
+- docs/ - Documentación del proyecto
+
+## Tecnologías
+
+- Flutter 3.x
+- Dart
+- Material Design
