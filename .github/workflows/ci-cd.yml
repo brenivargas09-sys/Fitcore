@@ -108,6 +108,11 @@ jobs:
     name: Pruebas automatizadas y cobertura
     runs-on: ubuntu-latest
     needs: entorno
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      FITCORE_TEST_EMAIL: ${{ secrets.FITCORE_TEST_EMAIL }}
+      FITCORE_TEST_PASSWORD: ${{ secrets.FITCORE_TEST_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -122,6 +127,10 @@ jobs:
 
       - name: Ejecutar pruebas con cobertura
         run: flutter test --coverage
+
+      - name: Verificacion del backend con el cliente de la app
+        if: env.SUPABASE_URL != '' && env.SUPABASE_ANON_KEY != ''
+        run: dart run tool/verificar_backend.dart
 
       - name: Resumen de cobertura
         run: |

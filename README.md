@@ -136,5 +136,20 @@ newman run api-tests/FitCore.postman_collection.json \
 
 Ultima salida real: **14 peticiones, 33 aserciones, 0 fallas** (evidencias en `docs/evidencias/api-newman-consola.txt`, `docs/evidencias/api-newman-consola-ci.txt` y `docs/evidencias/api-newman-report.html`).
 
+### Verificacion del backend con el cliente de la app
+
+`tool/verificar_backend.dart` comprueba, con el mismo cliente `package:supabase` que usa la aplicacion, que el login real funciona, que el rol administrativo se resuelve, que las 8 tablas responden y que la RLS protege los datos:
+
+```bash
+# PowerShell
+$env:SUPABASE_URL="https://TU-PROYECTO.supabase.co"
+$env:SUPABASE_ANON_KEY="eyJ..."
+$env:FITCORE_TEST_EMAIL="admin@fitcore.com"
+$env:FITCORE_TEST_PASSWORD="admin123"
+dart run tool/verificar_backend.dart
+```
+
+Salida real: `docs/evidencias/verificacion-backend.txt` (todas las comprobaciones `[OK]`). El pipeline ejecuta este script en el job *Pruebas automatizadas y cobertura*.
+
 Ejecuciones y artefactos: https://github.com/brenivargas09-sys/Fitcore/actions
 Releases: https://github.com/brenivargas09-sys/Fitcore/releases

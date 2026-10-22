@@ -806,6 +806,29 @@ parrafo(doc, (
     "test-scripts / 33 assertions, 0 fallas, duración total 1.88 s y tiempo promedio de "
     "respuesta 120 ms (mínimo 17 ms, máximo 301 ms)."
 ), negrita=True)
+encabezado(doc, "7.5.1 Verificación del backend con el cliente de la aplicación", 3)
+parrafo(doc, (
+    "La colección de Postman prueba el contrato HTTP; para comprobar además que la capa "
+    "de datos de la app (mismo cliente package:supabase) conversa con la base de datos en "
+    "la nube se incluye el script tool/verificar_backend.dart."
+))
+codigo(doc, (
+    "# PowerShell\n"
+    "$env:SUPABASE_URL=\"https://TU-PROYECTO.supabase.co\"\n"
+    "$env:SUPABASE_ANON_KEY=\"eyJ...\"\n"
+    "$env:FITCORE_TEST_EMAIL=\"admin@fitcore.com\"\n"
+    "$env:FITCORE_TEST_PASSWORD=\"admin123\"\n"
+    "dart run tool/verificar_backend.dart"
+))
+parrafo(doc, (
+    "Comprobaciones que realiza (todas con salida [OK] en la evidencia "
+    "docs/evidencias/verificacion-backend.txt): inicio de sesión con las credenciales "
+    "reales, RPC es_admin en true, lectura autenticada de las 8 tablas del modelo de datos, "
+    "RLS oculta las filas al rol anónimo y la API responde 401 sin apikey. El script "
+    "devuelve código de salida 0 solo si todas las comprobaciones son correctas, por lo que "
+    "el pipeline lo ejecuta como puerta de calidad (paso «Verificación del backend con el "
+    "cliente de la app», job Pruebas automatizadas y cobertura)."
+))
 parrafo(doc, (
     "Justificación: probar la API con Postman/Newman valida el contrato entre la "
     "aplicación y Supabase de forma independiente a la interfaz. Las peticiones 13 y 14 "
@@ -1026,11 +1049,17 @@ vinetas(doc, [
     "docs/evidencias/api-newman-report.html.",
     "[x] Evidencia del reporte obtenido del artifact reporte-api descargado de la corrida "
     "en GitHub Actions (6 KB de consola + 342 KB de HTML saneado).",
+    "[x] Terminal con la salida de la verificación del backend con el cliente de la "
+    "aplicación (tool/verificar_backend.dart): login real, es_admin = true, las 8 tablas "
+    "en 200, RLS sin fuga y 401 sin credenciales: docs/evidencias/verificacion-backend.txt. "
+    "El mismo script se ejecuta en el pipeline (job Pruebas automatizadas y cobertura) como "
+    "puerta de calidad.",
 ])
 tabla(doc, ["Evidencia", "Contenido"], [
     ["docs/evidencias/api-newman-consola.txt", "Salida completa de Newman en local: 14 peticiones, 33 aserciones, 0 fallas"],
     ["docs/evidencias/api-newman-consola-ci.txt", "Misma salida obtenida del artifact reporte-api de la corrida 39689453079 (GitHub Actions)"],
     ["docs/evidencias/api-newman-report.html", "Reporte HTML de Newman (contenido, detalle de cada petición y códigos de estado) saneado: contraseña, tokens JWT y claves publicables reemplazados por ***"],
+    ["docs/evidencias/verificacion-backend.txt", "Salida de tool/verificar_backend.dart: login real, RPC es_admin, lectura de las 8 tablas, RLS y 401 sin credenciales — todas las comprobaciones [OK]"],
 ], anchos=[6.0, 10.0])
 encabezado(doc, "9.5 Artefactos y despliegue", 2)
 vinetas(doc, [

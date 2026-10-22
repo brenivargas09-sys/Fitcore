@@ -1,0 +1,21 @@
+﻿FitCore - verificacion del backend Supabase
+  proyecto: https://zxsberoadrixfenzddig.supabase.co
+1) Autenticacion (GoTrue)
+  [OK]   login correcto: admin@fitcore.com (id 364a4e9c-b5ef-405a-a702-4615580030a7)
+2) Rol administrativo (RPC es_admin)
+  [OK]   es_admin = true
+3) Lectura autenticada de las 8 tablas
+  [OK]   usuarios -> 6 fila(s)
+  [OK]   clases -> 0 fila(s)
+  [OK]   rutinas -> 0 fila(s)
+  [OK]   membresias -> 0 fila(s)
+  [OK]   pagos -> 0 fila(s)
+  [OK]   avisos -> 0 fila(s)
+  [OK]   planes -> 0 fila(s)
+  [OK]   info_gimnasio -> 0 fila(s)
+4) Seguridad: RLS y ausencia de credenciales
+  [OK]   el rol anonimo no observa filas de usuarios (RLS activa)
+5) Sin apikey la API responde 401
+  [OK]   peticion sin apikey rechazada con 401
+
+RESULTADO: todas las comprobaciones fueron correctas.
