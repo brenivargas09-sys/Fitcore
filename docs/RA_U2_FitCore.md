@@ -556,9 +556,10 @@ Comprobaciones que realiza (todas con salida `[OK]` en la evidencia `docs/eviden
 | Ejecucion #4 (integracion del PR) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685864184 |
 | Ejecucion #5 (documentacion RA) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39687129467 |
 | Ejecucion #6 (**pruebas de API reales**) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079 |
+| Ejecucion #7 (**verificacion Dart del backend**) | https://github.com/brenivargas09-sys/Fitcore/actions/runs/39700973345 |
 | Artefacto de liberacion | `fitcore-apk` (`build/app/outputs/flutter-apk/app-release.apk`) |
 | Artefacto de pruebas | `reporte-api` (reporte HTML de Newman + consola, retencion de 7 dias) |
-| Releases publicadas | **v1.0.0+1-2**, **v1.0.0+1-3**, **v1.0.0+1-6**, **v1.0.0+1-7**, **v1.0.0+1-8** (una por cada `push` a `main`), cada una con el asset `app-release.apk` (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases |
+| Releases publicadas | **v1.0.0+1-2** a **v1.0.0+1-12** (una por cada `push` a `main`), cada una con el asset `app-release.apk` (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases |
 
 **Diagnostico de la primera corrida.** Al publicar la aplicacion, el pipeline se ejecuto por primera vez y **4 de los 6 jobs quedaron en verde** (entorno, calidad, pruebas, construccion del APK). El job **`api` fallo** porque las pruebas de contrato de Newman dependen de los secretos `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FITCORE_TEST_EMAIL` y `FITCORE_TEST_PASSWORD`, que todavia no estaban configurados en el repositorio: sin esas credenciales la coleccion se ejecuta contra una `baseUrl` vacia. Como `despliegue` depende de `api`, el job de publicacion del Release quedo en estado **skipped** y no se genero ninguna liberacion.
 
@@ -583,6 +584,8 @@ Comprobaciones que realiza (todas con salida `[OK]` en la evidencia `docs/eviden
 4. **Se agrego un paso de saneado** al workflow ("Sanear el reporte (ocultar credenciales)") que limpia el HTML antes de publicar el artifact `reporte-api`, de modo que ningun secreto llegue al repositorio ni al artifact.
 
 **Resultado.** La ejecucion https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079 (commit `3bf50cb`) dejo los **6 jobs en verde** con el paso *Ejecutar coleccion FitCore* en estado **success** (14 peticiones, 33 aserciones, 0 fallas), el artifact `reporte-api` publicado con el reporte saneado y la **Release `v1.0.0+1-8`** generada. El job `api` pasa asi a ser una **puerta de calidad real**: si el contrato de la API se rompiera, `despliegue` (que depende de `api`) no publicaria la Release.
+
+**Verificacion adicional con el cliente de la aplicacion (commit `66bb958`).** Se integro el script `tool/verificar_backend.dart` como paso del job `pruebas` (paso *Verificacion del backend con el cliente de la app*), que comprueba con el mismo cliente `package:supabase` de la app que el login real funciona, que el rol administrativo se resuelve, que las 8 tablas responden y que la RLS protege los datos. La ejecucion https://github.com/brenivargas09-sys/Fitcore/actions/runs/39700973345 completo los **6 jobs en verde** con ese paso en estado **success** y publico la **Release `v1.0.0+1-12`**.
 
 ---
 
@@ -628,7 +631,7 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 
 ### 9.1 Control de versiones y repositorio
 - [x] `git log --oneline` con los commits del pipeline: `d866825` (pipeline CI/CD + scripts + coleccion Postman/Newman), `625bd42` (documento tecnico RA U2 en Markdown y Word) y `923749e` (correccion del job `api` para que el pipeline no se detenga sin secretos).
-- [x] Commits de evidencia y verificacion: `cf094a7` (README + evidencias + RA U2), `14ece52` (merge del Pull Request #1), `897cc5b` (validacion del PR, corridas en verde y releases acumuladas) y `3bf50cb` (**pruebas de contrato de la API ejecutadas contra Supabase real** con Newman, reporte saneado y paso de saneado en el workflow).
+- [x] Commits de evidencia y verificacion: `cf094a7` (README + evidencias + RA U2), `14ece52` (merge del Pull Request #1), `897cc5b` (validacion del PR, corridas en verde y releases acumuladas), `3bf50cb` (**pruebas de contrato de la API ejecutadas contra Supabase real** con Newman, reporte saneado y paso de saneado en el workflow) y `66bb958` (**verificacion del backend con el cliente de la aplicacion**, `tool/verificar_backend.dart`, ejecutada en el pipeline).
 - [x] Repositorio en GitHub con la estructura completa del proyecto y la rama `main`: **https://github.com/brenivargas09-sys/Fitcore** (`lib/`, `android/`, `ios/`, `web/`, `windows/`, `linux/`, `macos/`, `test/`, `supabase/`, `api-tests/`, `scripts/`, `docs/` y `.github/workflows/ci-cd.yml`).
 - [x] Pull Request de ejemplo con la validacion del pipeline ejecutada (rama `feature/evidencias-ci-cd` → `main`), usado para evidenciar la revision antes de integrar cambios: **https://github.com/brenivargas09-sys/Fitcore/pull/1** (README del proyecto, evidencias de ejecucion de la aplicacion y actualizacion del presente documento; el pipeline se ejecuta automaticamente en cada Pull Request hacia `main`).
 
@@ -639,6 +642,7 @@ Para demostrar que las herramientas estan **correctamente configuradas y funcion
 - [x] Corrida de validacion del Pull Request #1 (5 jobs en verde; `despliegue` **skipped** por tratarse de un PR): https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685009906
 - [x] Ejecucion diagnostica documentada: https://github.com/brenivargas09-sys/Fitcore/actions/runs/39536523890 (job `api` en rojo por falta de secretos → correccion en el commit `923749e`).
 - [x] Corrida con las **pruebas de API ejecutadas de verdad** contra Supabase (6 jobs en verde, paso *Ejecutar coleccion FitCore* en success) y Release `v1.0.0+1-8`: https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079
+- [x] Corrida con la **verificacion del backend con el cliente de la app** en success (6 jobs en verde) y Release `v1.0.0+1-12`: https://github.com/brenivargas09-sys/Fitcore/actions/runs/39700973345
 - [x] Panel de **Secrets** del repositorio con los cuatro secretos configurados (sin exponer sus valores): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `FITCORE_TEST_EMAIL`, `FITCORE_TEST_PASSWORD`. *Configuracion validada por `gh secret list` y por el paso "Comprobar configuracion de secretos" del workflow, que en la corrida `39689453079` dio `listo=true` y ejecuto la coleccion completa. Las credenciales del usuario de prueba no se versionan: el workflow las recibe como secretos y el reporte HTML se sanea antes de publicar el artifact.*
 
 ### 9.3 Pruebas en el entorno de liberacion

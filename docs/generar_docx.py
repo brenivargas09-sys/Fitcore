@@ -851,9 +851,10 @@ tabla(doc, ["Elemento", "Valor verificado"], [
     ["Ejecución #4 (integración del PR)", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39685864184"],
     ["Ejecución #5 (documentación RA)", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39687129467"],
     ["Ejecución #6 (pruebas de API reales)", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079"],
+    ["Ejecución #7 (verificación Dart del backend)", "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39700973345"],
     ["Artefacto de liberación", "fitcore-apk (build/app/outputs/flutter-apk/app-release.apk)"],
     ["Artefacto de pruebas", "reporte-api (reporte HTML de Newman + consola, retención de 7 días)"],
-    ["Releases publicadas", "v1.0.0+1-2, v1.0.0+1-3, v1.0.0+1-6, v1.0.0+1-7, v1.0.0+1-8 (una por cada push a main), cada una con el asset app-release.apk (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases"],
+    ["Releases publicadas", "v1.0.0+1-2 a v1.0.0+1-12 (una por cada push a main), cada una con el asset app-release.apk (53 MB): https://github.com/brenivargas09-sys/Fitcore/releases"],
 ], anchos=[5.0, 11.0])
 parrafo(doc, (
     "Diagnóstico de la primera corrida. Al publicar la aplicación, el pipeline se "
@@ -929,6 +930,15 @@ parrafo(doc, (
     "puerta de calidad real: si el contrato de la API se rompiera, despliegue (que depende de "
     "api) no publicaría la Release."
 ))
+parrafo(doc, (
+    "Verificación adicional con el cliente de la aplicación (commit 66bb958). Se integró "
+    "el script tool/verificar_backend.dart como paso del job pruebas (paso «Verificación "
+    "del backend con el cliente de la app»), que comprueba con el mismo cliente "
+    "package:supabase de la app que el login real funciona, que el rol administrativo se "
+    "resuelve, que las 8 tablas responden y que la RLS protege los datos. La ejecución "
+    "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39700973345 completó los 6 "
+    "jobs en verde con ese paso en estado success y publicó la Release v1.0.0+1-12."
+))
 
 # ============================================================================
 # 8. CASOS DE PRUEBA
@@ -985,8 +995,10 @@ vinetas(doc, [
     "secretos).",
     "[x] Commits de evidencia y verificación: cf094a7 (README + evidencias + RA U2), "
     "14ece52 (merge del Pull Request #1), 897cc5b (validación del PR, corridas en verde "
-    "y releases acumuladas) y 3bf50cb (pruebas de contrato de la API ejecutadas contra "
-    "Supabase real con Newman, reporte saneado y paso de saneado en el workflow).",
+    "y releases acumuladas), 3bf50cb (pruebas de contrato de la API ejecutadas contra "
+    "Supabase real con Newman, reporte saneado y paso de saneado en el workflow) y 66bb958 "
+    "(verificación del backend con el cliente de la aplicación, tool/verificar_backend.dart, "
+    "ejecutada en el pipeline).",
     "[x] Repositorio en GitHub con la estructura completa del proyecto y la rama main: "
     "https://github.com/brenivargas09-sys/Fitcore (lib/, android/, ios/, web/, "
     "windows/, linux/, macos/, test/, supabase/, api-tests/, scripts/, docs/ y "
@@ -1017,6 +1029,9 @@ vinetas(doc, [
     "[x] Corrida con las pruebas de API ejecutadas de verdad contra Supabase (6 jobs en "
     "verde, paso «Ejecutar colección FitCore» en success) y Release v1.0.0+1-8: "
     "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39689453079",
+    "[x] Corrida con la verificación del backend con el cliente de la app en success (6 "
+    "jobs en verde) y Release v1.0.0+1-12: "
+    "https://github.com/brenivargas09-sys/Fitcore/actions/runs/39700973345",
     "[x] Panel de Secrets del repositorio con los cuatro secretos configurados (sin "
     "exponer sus valores): SUPABASE_URL, SUPABASE_ANON_KEY, FITCORE_TEST_EMAIL y "
     "FITCORE_TEST_PASSWORD. Configuración validada por gh secret list y por el paso "
