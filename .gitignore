@@ -52,5 +52,4 @@ $log
 *.err
 reports/
 coverage/
-api-tests/local*.json
 android/build/reports/
