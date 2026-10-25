@@ -1,9 +1,9 @@
-"""Genera el diagrama del pipeline CI/CD de FitCore (PNG) para el reporte del RA.
+"""Genera el diagrama del pipeline CI/CD de FitCore (PNG).
 
 Topologia real declarada en .github/workflows/ci-cd.yml:
-  entorno -> [calidad, pruebas, api] (en paralelo)
+  entorno -> [calidad, pruebas] (en paralelo)
   construye -> needs: [calidad, pruebas]
-  despliegue -> needs: [construye, api]  + if: main && push
+  despliegue -> needs: [construye]  + if: main && push
 """
 from PIL import Image, ImageDraw, ImageFont
 
@@ -106,7 +106,7 @@ etapa_base(BX, BY, "1", "ENTORNO", "Preparar entorno\nde liberacion",
 
 # ------------------------------------------------- grupo de validaciones paralelas
 GX, GY, GW = 760, 250, 420
-d.rounded_rectangle([GX, GY, GX + GW, GY + 560], radius=16, fill=(248, 250, 252),
+d.rounded_rectangle([GX, GY, GX + GW, GY + 404], radius=16, fill=(248, 250, 252),
                     outline=AZUL_BORDE, width=3)
 d.text((GX + 22, GY + 16), "VALIDACIONES EN PARALELO", font=f_sec, fill=AZUL)
 d.text((GX + 22, GY + 48), "needs: entorno   (se inician a la vez)", font=f_art, fill=GRIS_TXT)
@@ -114,7 +114,6 @@ d.text((GX + 22, GY + 48), "needs: entorno   (se inician a la vez)", font=f_art,
 PARA = [
     ("2", "CALIDAD", "Analisis estatico y formato", ["dart format", "flutter analyze"], "38 s"),
     ("3", "PRUEBAS", "Pruebas y cobertura", ["flutter test", "--coverage"], "52 s"),
-    ("4", "API", "Contrato de API (Newman)", ["newman run", "coleccion FitCore"], "17 s"),
 ]
 iy = GY + 90
 for num, tit, desc, cmds, dur in PARA:
@@ -130,12 +129,12 @@ for num, tit, desc, cmds, dur in PARA:
 
 # ------------------------------------------------------- construccion y despliegue
 CX, DY = 1240, 250
-etapa_base(CX, DY, "5", "CONSTRUYE", "Compilar APK\nde liberacion",
+etapa_base(CX, DY, "4", "CONSTRUYE", "Compilar APK\nde liberacion",
            ["flutter build apk", "--release", "--dart-define"], "333 s",
            "artifact: fitcore-apk", "app-release.apk (55,2 MB)")
 
 EX = 1560
-etapa_base(EX, DY, "6", "DESPLIEGA", "Publicar version\nen GitHub Releases",
+etapa_base(EX, DY, "5", "DESPLIEGA", "Publicar version\nen GitHub Releases",
            ["softprops/", "gh-release"], "13 s",
            "Release: v1.0.0+<build>", "solo en main y con push")
 
@@ -163,19 +162,18 @@ def etiqueta(x_centro, texto):
 
 etiqueta((BX + BW + GX) / 2, "needs: entorno")
 etiqueta((GX + GW + CX) / 2, "needs: [calidad, pruebas]")
-etiqueta((CX + BW + EX) / 2, "needs: [construye, api]")
+etiqueta((CX + BW + EX) / 2, "needs: [construye]")
 
 # --------------------------------------------------------------- notas de reglas
 NY = 860
-d.rounded_rectangle([60, NY, W - 60, NY + 290], radius=16, fill=GRIS_SUAVE,
+d.rounded_rectangle([60, NY, W - 60, NY + 250], radius=16, fill=GRIS_SUAVE,
                     outline=GRIS_BORDE, width=2)
 d.text((88, NY + 18), "REGLAS DE DEPENDENCIA, PUBLICACION Y TIEMPOS", font=f_sec, fill=GRIS)
 
 reglas = [
-    "Las etapas «calidad», «pruebas» y «api» dependen solo de «entorno»: se ejecutan en paralelo y no dependen entre si.",
-    "«construye» depende de «calidad» y «pruebas»; «despliegue» depende de «construye» y de «api» (la validacion del contrato sigue vigente al publicar).",
+    "Las etapas «calidad» y «pruebas» dependen solo de «entorno»: se ejecutan en paralelo y no dependen entre si.",
+    "«construye» depende de «calidad» y «pruebas»; «despliegue» depende únicamente de «construye».",
     "El despliegue solo se ejecuta en la rama main y con el evento push; una pull request o una rama de trabajo nunca publican una version.",
-    "Si la etapa «api» falla, «despliegue» se omite: nunca se publica una version sin contrato de API validado.",
 ]
 y = NY + 62
 for r in reglas:
@@ -184,8 +182,8 @@ for r in reglas:
     y += 40
 
 d.text((88, y + 12),
-       "Tiempo de reloj de la linea de produccion: 441 s (7 min 21 s)  |  suma de las seis etapas: 487 s  |  "
-       "compilacion del APK: 333 s (69 % del tiempo de computo).",
+       "Tiempo de reloj de la linea de produccion: 432 s (7 min 12 s)  |  suma de las cinco etapas: 470 s  |  "
+       "compilacion del APK: 333 s (71 % del tiempo de computo).",
        font=f_nota_f, fill=NARANJA)
 
 salida = r"C:\Users\Any Ovando\Documents\FitCore_Limpio\docs\capturas\diagrama_pipeline.png"

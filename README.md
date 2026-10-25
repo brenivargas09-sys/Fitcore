@@ -37,7 +37,6 @@ Cuenta con un menú lateral adaptativo que permite navegar entre los distintos mó
 - web/ - Configuración para versión web.
 - windows/ - Configuración para versión Windows.
 - ssets/ - Recursos gráficos e imágenes.
-- pi-tests/ - Colección de pruebas API con Postman.
 - docs/ - Documentación del proyecto.
 
 ## Tecnologías
