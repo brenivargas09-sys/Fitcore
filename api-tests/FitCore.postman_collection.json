@@ -26,6 +26,9 @@
                   "pm.test('El servicio REST responde', function () {",
                   "  pm.response.to.have.status(200);",
                   "});",
+                  "pm.test('Devuelve un arreglo (tabla expuesta)', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
                   "pm.test('Tiempo de respuesta menor a 1500 ms', function () {",
                   "  pm.expect(pm.response.responseTime).to.be.below(1500);",
                   "});"
@@ -41,9 +44,13 @@
               { "key": "Authorization", "value": "Bearer {{anonKey}}" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/rest/v1/",
+              "raw": "{{baseUrl}}/rest/v1/usuarios?select=*&limit=1",
               "host": ["{{baseUrl}}"],
-              "path": ["rest", "v1", ""]
+              "path": ["rest", "v1", "usuarios"],
+              "query": [
+                { "key": "select", "value": "*" },
+                { "key": "limit", "value": "1" }
+              ]
             }
           }
         },
@@ -366,8 +373,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Sin token valido la RLS bloquea (401/403)', function () {",
-                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "pm.test('Sin token la consulta responde (200)', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('RLS no expone registros al usuario anonimo', function () {",
+                  "  pm.expect(pm.response.json()).to.have.lengthOf(0);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -378,6 +388,38 @@
             "method": "GET",
             "header": [
               { "key": "apikey", "value": "{{anonKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rest/v1/usuarios?select=*",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "v1", "usuarios"],
+              "query": [{ "key": "select", "value": "*" }]
+            }
+          }
+        },
+        {
+          "name": "Seguridad - token invalido rechazado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Token invalido es rechazado (401)', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "pm.test('No se devuelve ningun registro', function () {",
+                  "  pm.expect(pm.response.json()).not.to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{anonKey}}" },
+              { "key": "Authorization", "value": "Bearer token-invalido-fitcore" }
             ],
             "url": {
               "raw": "{{baseUrl}}/rest/v1/usuarios?select=*",
